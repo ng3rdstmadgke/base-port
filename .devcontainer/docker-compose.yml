@@ -1,0 +1,18 @@
+version: '3.2'
+services:
+  main:
+    hostname: main.baseport.local
+    build:
+      context: ../
+      dockerfile: docker/devcontainer/Dockerfile
+    volumes:  # docker-compose.yml があるディレクトリからの相対パスで指定する
+      - ..:/baseport:cached
+      - ~/.aws:/home/vscode/.aws:cached
+      - ~/.ssh:/home/vscode/.ssh:cached
+    command: sleep infinity
+    networks:
+      br-baseport: {}
+networks:
+  br-baseport:
+    driver: bridge
+    name: br-baseport
