@@ -44,6 +44,10 @@ locals {
   cluster_name = "${local.app_name}-${local.stage}"
 }
 
+output "keda_operator_role_arn" {
+  value = module.keda.keda_operator_role_arn
+}
+
 // Data Source: aws_eks_cluster
 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster
 data "aws_eks_cluster" "this" {
