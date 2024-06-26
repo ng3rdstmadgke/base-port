@@ -50,3 +50,14 @@ terraform init
 terraform plan
 terraform apply -auto-approve
 ```
+
+
+# 削除
+
+```bash
+cd ${CONTAINER_PROJECT_ROOT}/teraform/env/helm/prd
+terraform destroy -auto-approve
+
+cd ${CONTAINER_PROJECT_ROOT}/teraform/env/cluster/prd
+terraform destroy -auto-approve
+```
