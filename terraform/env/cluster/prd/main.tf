@@ -45,3 +45,14 @@ module eks {
   ]
   cluster_version = "1.30"
 }
+
+module default-fargate-profile {
+  source = "../../../module/fargate-profile"
+  profile_name = "default_profile"
+  cluster_name = module.eks.cluster_name
+  private_subnets = module.eks.private_subnets
+  eks_fargate_pod_execution_role_arn = module.eks.eks_fargate_pod_execution_role_arn
+  selectors = [
+    { namespace = "*" }
+  ]
+}
