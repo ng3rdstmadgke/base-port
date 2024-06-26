@@ -38,19 +38,86 @@ module "eks" {
   // ノード/ノードグループがプロビジョニングされるサブネット ID
   // control_plane_subnet_idsが省略された場合、EKS クラスタの制御プレーン (ENI) はこれらのサブネットにプロビジョニングされる
   // パブリックサブネットを含める場合: subnet_ids = concat(module.vpc.private_subnets, module.vpc.public_subnets)
-  subnet_ids =module.vpc.private_subnets 
+  subnet_ids = module.vpc.private_subnets
 
   // control_plane_subnet_ids = module.vpc.intra_subnets
-
-  # Fargate profiles use the cluster primary security group so these are not utilized
-  create_cluster_security_group = false
-  create_node_security_group    = false
 
   // IAM Roles for Service Accounts (IRSA) を有効にするためにEKS用のOpenID Connect Providerを作成するかどうか
   enable_irsa     = true
 
   // クラスタ作成者(Terraformが使用するID)をアクセスエントリ経由で管理者として追加する
   enable_cluster_creator_admin_permissions = true
+
+  // クラスターに対するIAMプリンシパルアクセスの有効化: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/add-user-role.html
+  authentication_mode = "API_AND_CONFIG_MAP"
+
+  // マネージド型ノードグループ: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/managed-node-groups.html
+  eks_managed_node_groups = {
+    default = {
+      min_size = 1
+      max_size = 5
+      desired_size   = 1
+      instance_types = ["t3.medium"]
+      capacity_type  = "SPOT"
+    }
+  }
+
+  # Fargate profiles use the cluster primary security group so these are not utilized
+  #create_cluster_security_group = false
+  #create_node_security_group    = false
+
+  /**
+   * クラスタSG
+   * - EKSのセキュリティグループについて理解する | Qiita: https://qiita.com/MAKOTO1995/items/4e70998e50aaea5e9882
+   * - クラスタSGは下記に適用される
+   *   - EKSコントロールプレーン通信用ENI
+   *   - マネージドノードグループ内のEC2ノード (ただし、ノードSGが付与されている場合は、クラスタSGは付与されない)
+   */
+  cluster_security_group_additional_rules = {
+    egress_nodes_ephemeral_ports_tcp = {
+      description                = "To node 1025-65535"
+      protocol                   = "tcp"
+      from_port                  = 1025
+      to_port                    = 65535
+      type                       = "egress"
+      source_node_security_group = true
+    }
+  }
+
+  /**
+   * ノードSG
+   * - EKSのセキュリティグループについて理解する | Qiita: https://qiita.com/MAKOTO1995/items/4e70998e50aaea5e9882
+   * - ノードSGは下記に適用される
+   *   - マネージドノードグループ内のEC2ノードに付与するSG
+   */
+  node_security_group_additional_rules = {
+    admission_webhook = {
+      description                   = "Admission Webhook"
+      protocol                      = "tcp"
+      from_port                     = 0
+      to_port                       = 65535
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+
+    ingress_self_all = {
+      description = "Node to node all ports/protocols"
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+      type        = "ingress"
+      self        = true
+    }
+    egress_all = {
+      description      = "Node all egress"
+      protocol         = "-1"
+      from_port        = 0
+      to_port          = 0
+      type             = "egress"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+    }
+  }
 }
 
 /**
