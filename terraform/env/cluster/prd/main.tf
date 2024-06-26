@@ -27,7 +27,7 @@ provider "aws" {
 }
 
 output "vpc_id" {
-  value = module.eks.vpc_id
+  value = module.eks.vpc.vpc_id
 }
 
 
@@ -50,14 +50,16 @@ module eks {
   cluster_version = "1.30"
 }
 
-module default-fargate-profile {
+module test-fargate-profile {
   source = "../../../module/fargate-profile"
-  profile_name = "default_profile"
-  cluster_name = module.eks.cluster_name
-  private_subnets = module.eks.private_subnets
+  profile_name = "test"
+  cluster_name = module.eks.eks.cluster_name
+  private_subnets = module.eks.vpc.private_subnets
   eks_fargate_pod_execution_role_arn = module.eks.eks_fargate_pod_execution_role_arn
   selectors = [
-    { namespace = "*" }
+    {
+      namespace = "fargate-test"
+    }
   ]
 }
 
@@ -65,18 +67,18 @@ module default-fargate-profile {
  * https://github.com/terraform-aws-modules/terraform-aws-eks/tree/v20.14.0/modules/eks-managed-node-group
  */
 /*
-module "eks_managed_node_group" {
+module "some_managed_node_group" {
   source = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
-  name            = "default"
-  cluster_name    = module.eks.cluster_name
-  cluster_version = module.eks.cluster_version
+  name            = "some"
+  cluster_name    = module.eks.eks.cluster_name
+  cluster_version = module.eks.eks.cluster_version
 
   subnet_ids = module.eks.subnet_ids
 
   // eksモジュールの外でこのモジュールを利用する場合、以下の変数を指定する必要があります
   // これらを指定しないと、ノードのセキュリティグループが空になり、クラスタに参加できません
-  cluster_primary_security_group_id = module.eks.cluster_primary_security_group_id
-  vpc_security_group_ids            = [module.eks.node_security_group_id]
+  cluster_primary_security_group_id = module.eks.eks.cluster_primary_security_group_id
+  vpc_security_group_ids            = [module.eks.eks.node_security_group_id]
 
   // Note: `disk_size`, と `remote_access` は デフォルトlaunch templateを利用する場合のみ指定可能
   // このモジュールでは、セキュリティグループ、タグの伝播などをカスタマイズするために、デフォルトでカスタムlaunch templateを提供するようになっています
@@ -95,5 +97,9 @@ module "eks_managed_node_group" {
 
   instance_types = ["t3.medium"]
   capacity_type  = "SPOT"
+
+  labels = {
+    "nodegroup-type" = "default"
+  }
 }
  */

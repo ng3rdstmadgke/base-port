@@ -18,7 +18,7 @@
   iam_role_arn = var.eks_fargate_pod_execution_role_arn
 
   // このプロファイルで実行する Pod のセレクタを指定します。
-  //   - https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/fargate.html#fargate-considerations
+  //   - https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/fargate-profile.html#fargate-profile-components
   // 説明
   //   - ワイルドカードは任意の複数文字にマッチする`*` と、任意の一文字にマッチする`?` の2つが使用可能です。
   //   - namespaceのみが指定された場合はそのnamespaceに属するすべてのPodがFargateで実行されます。
