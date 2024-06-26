@@ -57,6 +57,7 @@ resource "kubernetes_service_account" "aws_loadbalancer_controller" {
  *     https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.7/
  */
 
+//helm_release - helm - terraform: https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release
 resource "helm_release" "aws-load-balancer-controller" {
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
