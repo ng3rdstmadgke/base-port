@@ -14,9 +14,12 @@ terraform plan
 terraform apply -auto-approve
 ```
 
+`~/.kube/config` にクラスタを登録
+
 ```bash
 aws eks update-kubeconfig --name baseport-prd
 
+# kubectlコマンドが実行できるかを確認
 kubectl get all
 ```
 
@@ -36,4 +39,14 @@ eksctl create iamidentitymapping \
 
 # 指定したロールがsystem:mastersグループに属しているかを確認
 kubectl describe -n kube-system configmap/aws-auth
+```
+
+
+## Helmチャートのインストール
+
+```bash
+cd ${CONTAINER_PROJECT_ROOT}/teraform/env/helm/prd
+terraform init
+terraform plan
+terraform apply -auto-approve
 ```
