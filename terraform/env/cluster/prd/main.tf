@@ -30,11 +30,16 @@ output "vpc_id" {
   value = module.eks.vpc.vpc_id
 }
 
+locals {
+  app_name = "baseport"
+  stage = "prd"
+}
+
 
 module eks {
   source = "../../../module/eks"
-  app_name = "baseport"
-  stage = "prd"
+  app_name = local.app_name
+  stage = local.stage
   // ALBにアクセスする際のIPアドレス
   vpc_cidr = "10.32.0.0/16"
   private_subnets = [
@@ -53,7 +58,7 @@ module eks {
 module test-fargate-profile {
   source = "../../../module/fargate-profile"
   profile_name = "test"
-  cluster_name = module.eks.eks.cluster_name
+  cluster_name = module.eks.cluster.cluster_name
   private_subnets = module.eks.vpc.private_subnets
   eks_fargate_pod_execution_role_arn = module.eks.eks_fargate_pod_execution_role_arn
   selectors = [
@@ -67,18 +72,18 @@ module test-fargate-profile {
  * https://github.com/terraform-aws-modules/terraform-aws-eks/tree/v20.14.0/modules/eks-managed-node-group
  */
 /*
-module "some_managed_node_group" {
+module "group01" {
   source = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
-  name            = "some"
-  cluster_name    = module.eks.eks.cluster_name
-  cluster_version = module.eks.eks.cluster_version
+  name            = "${local.app_name}-${local.stage}-group-01"
+  cluster_name    = module.eks.cluster.cluster_name
+  cluster_version = module.eks.cluster.cluster_version
 
-  subnet_ids = module.eks.subnet_ids
+  subnet_ids = module.eks.vpc.private_subnets
 
   // eksモジュールの外でこのモジュールを利用する場合、以下の変数を指定する必要があります
   // これらを指定しないと、ノードのセキュリティグループが空になり、クラスタに参加できません
-  cluster_primary_security_group_id = module.eks.eks.cluster_primary_security_group_id
-  vpc_security_group_ids            = [module.eks.eks.node_security_group_id]
+  cluster_primary_security_group_id = module.eks.cluster.cluster_primary_security_group_id
+  vpc_security_group_ids            = [module.eks.cluster.node_security_group_id]
 
   // Note: `disk_size`, と `remote_access` は デフォルトlaunch templateを利用する場合のみ指定可能
   // このモジュールでは、セキュリティグループ、タグの伝播などをカスタマイズするために、デフォルトでカスタムlaunch templateを提供するようになっています
@@ -98,8 +103,8 @@ module "some_managed_node_group" {
   instance_types = ["t3.medium"]
   capacity_type  = "SPOT"
 
-  labels = {
-    "nodegroup-type" = "default"
-  }
+  //labels = {
+  //  "nodegroup-type" = "some"
+  //}
 }
- */
+*/

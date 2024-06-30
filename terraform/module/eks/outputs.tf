@@ -1,4 +1,4 @@
-output eks {
+output cluster {
   value = module.eks
 }
 
