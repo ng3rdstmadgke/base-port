@@ -10,5 +10,7 @@ locals {
   account_id = data.aws_caller_identity.self.account_id
   region = data.aws_region.self.name
   oidc_provider = replace(var.eks_oidc_issure_url, "https://", "")
-  keda_namespace = "keda"
+  service_account = "karpenter"
+  namespace = "kube-system"
+  version = "0.37.0"
 }

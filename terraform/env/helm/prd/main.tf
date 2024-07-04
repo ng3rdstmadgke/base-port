@@ -102,3 +102,13 @@ module keda {
 module argocd {
   source = "../../../module/argocd"
 }
+
+module karpenter {
+  source = "../../../module/karpenter"
+  app_name = local.app_name
+  stage = local.stage
+  // このコマンドで取得できる:
+  // aws eks describe-cluster --name baseport-prd --output text --query "cluster.identity.oidc.issuer"
+  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+
+}
