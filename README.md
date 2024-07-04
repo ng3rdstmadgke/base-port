@@ -51,6 +51,13 @@ terraform plan
 terraform apply -auto-approve
 ```
 
+## セットアップスクリプトの実行
+
+```bash
+# Karpenterのノードプールを作成
+./scripts/karpenter/setup.sh
+```
+
 
 # 削除
 
