@@ -19,13 +19,23 @@ RUN apt-get update && \
       groff \
       less \
       sudo \
-      gcc
+      gcc \
+      tar
 
 # ロケール設定
 RUN echo 'ja_JP.UTF-8 UTF-8' >> /etc/locale.gen && \
     locale-gen && \
     update-locale LANG=ja_JP.UTF-8
 RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+
+# golang インストール
+# https://go.dev/doc/install
+RUN wget https://go.dev/dl/go1.22.5.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.22.5.linux-amd64.tar.gz
+
+# k9s インストール
+# https://github.com/derailed/k9s/tree/latest
+RUN GOBIN=/usr/local/bin /usr/local/go/bin/go install github.com/derailed/k9s@latest
 
 # aws cli インストール
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \

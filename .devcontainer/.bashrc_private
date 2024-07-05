@@ -11,4 +11,6 @@ if [ "$?" -eq "0" ]; then
   export AWS_ACCOUNT_ID=$(echo $STS_GET_CALLER_IDENTITY | jq -r '.Account')
 fi
 
+export PATH=$PATH:/usr/local/go/bin
+
 source /etc/bash_completion.d/helm
