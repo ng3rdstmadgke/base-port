@@ -112,3 +112,7 @@ module karpenter {
   eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
 
 }
+
+module metrics_server {
+  source = "../../../module/metrics-server"
+}
