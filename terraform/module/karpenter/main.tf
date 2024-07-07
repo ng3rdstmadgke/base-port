@@ -5,7 +5,7 @@
  * 
  */
 /**
- * ノードをプロビジョニングするためのロール
+ * KarpenterでプロビジョニングされるNodeに付与するロール
  */
 resource "aws_iam_role" "karpenter_node_role" {
   name = "${var.app_name}-${var.stage}-KarpenterNodeRole"
@@ -43,7 +43,7 @@ resource "aws_iam_role_policy_attachment" "amazon_ssm_managed_instance_core" {
 }
 
 /**
- * KarpenterControllerPolicy
+ * Karpenterのコントロールpodに付与するロール
  */
 resource "aws_iam_role" "karpenter_controller_role" {
   name = "${var.app_name}-${var.stage}-KarpenterControllerRole"
@@ -377,7 +377,16 @@ EOT
 }
 
 /**
- * 割り込みキュー
+ * ノードの中断イベントを監視するためのSQS
+ * https://karpenter.sh/v0.37/concepts/disruption/#interruption
+ *
+ * Karpenterでは、AWSサービスからノードに影響を及ぼす可能性のある中断イベント(spot中断など)をSQSを通じてキャッチします。
+ * SQSからイベントを受信すると、Karpenterはtaint, drain, を実行して適切にノードを終了させます。
+ * このSQSにはEventBridgeルールから下記のイベントが送信されます。
+ * - スポットの中断警告
+ * - スケジュールされた変更ヘルス イベント (メンテナンス イベント)
+ * - インスタンス終了イベント
+ * - インスタンス停止イベント
  */
 resource "aws_sqs_queue" "karpenter_interruption_queue" {
   name = "${var.app_name}-${var.stage}-KarpenterInterruptionQueue"
@@ -408,7 +417,7 @@ resource "aws_sqs_queue_policy" "karpenter_interruption_queue" {
 }
 
 /**
- * ScheduledChangeRule
+ * ノードのメンテナンスイベントを監視するためのCloudWatch Event Rule
  */
 resource "aws_cloudwatch_event_rule" "scheduled_change_rule" {
   name        = "${var.app_name}-${var.stage}-ScheduledChangeRule"
@@ -429,7 +438,7 @@ resource "aws_cloudwatch_event_target" "scheduled_change_rule" {
 }
 
 /**
- * SpotInterruptionRule
+ * スポット中断イベントを監視するためのCloudWatch Event Rule
  */
 resource "aws_cloudwatch_event_rule" "spot_interruption_rule" {
   name        = "${var.app_name}-${var.stage}-SpotInterruptionRule"
@@ -450,7 +459,8 @@ resource "aws_cloudwatch_event_target" "spot_interruption_rule" {
 }
 
 /**
- * RebalanceRule
+ * spotインスタンスで中断のリスクが高まった場合の通知を監視するためのCloudWatch Event Rule
+ * - https://docs.aws.amazon.com/ja_jp/AWSEC2/latest/UserGuide/rebalance-recommendations.html
  */
 resource "aws_cloudwatch_event_rule" "rebalance_rule" {
   name        = "${var.app_name}-${var.stage}-RebalanceRule"
@@ -471,7 +481,9 @@ resource "aws_cloudwatch_event_target" "rebalance_rule" {
 }
 
 /**
- * InstanceStateChangeRule
+ * インスタンスの状態(pending,running, stoping, terminated, etc..)
+ * が変更された際に通知を受け取るためのCloudWatch Event Rule
+ * - https://docs.aws.amazon.com/ja_jp/AWSEC2/latest/UserGuide/monitoring-instance-state-changes.html
  */
 resource "aws_cloudwatch_event_rule" "instance_state_change_rule" {
   name        = "${var.app_name}-${var.stage}-InstanceStateChangeRule"
