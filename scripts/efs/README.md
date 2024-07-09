@@ -6,8 +6,11 @@
 # デプロイ
 
 ```bash
+# ${CONTAINER_PROJECT_ROOT}/scripts/efs/tmp/sc.yaml の作成
+${CONTAINER_PROJECT_ROOT}/scripts/efs/setup.sh
+
 # StorageClass作成
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/efs/sc.yaml
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/efs/tmp/sc.yaml
 storageclass.storage.k8s.io/efs-sc created
 
 # 確認
@@ -62,8 +65,7 @@ $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/efs/test/pvc_pod.yaml
 
 ```bash
 # コントローラのログ確認
-$ kubectl get po -n kube-system
-$ kubectl logs -n kube-system  efs-csi-controller-55c9f799f-2wnf7
+$ kubectl logs -f -n kube-system -l app.kubernetes.io/name=aws-efs-csi-driver,app=efs-csi-controller
 
 # pvc, scの詳細(Events)
 $ kubectl describe pvc efs-pvc
