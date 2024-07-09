@@ -45,10 +45,12 @@ for node_sg_id in $NODE_SECURITY_GROUP_IDS; do
     --tags "Key=karpenter.sh/discovery,Value=${CLUSTER_NAME}"
 done
 
+mkdir -p $SCRIPT_DIR/tmp
+
 # NodePools | Karpenter: https://karpenter.sh/docs/concepts/nodepools/
 #   - instance-types | Karpenter: https://karpenter.sh/docs/reference/instance-types/
 # NodeClasses | Karpenter: https://karpenter.sh/docs/concepts/nodeclasses/
-cat <<EOF | envsubst | kubectl apply -f -
+cat <<EOF | envsubst > $SCRIPT_DIR/tmp/node_pool.yaml
 apiVersion: karpenter.sh/v1beta1
 kind: NodePool
 metadata:

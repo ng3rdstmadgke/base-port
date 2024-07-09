@@ -1,26 +1,30 @@
 # セットアップ
 
 ```bash
-./scripts/karpenter/setup.sh
+# マニフェストファイルを作成
+${CONTAINER_PROJECT_ROOT}/scripts/karpenter/setup.sh
+
+# ノードプールを作成
+kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/karpenter/tmp/node_pool.yaml
+
+# ノードプールの削除
+kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/karpenter/tmp/node_pool.yaml
 ```
 
 # 動作確認
 
 ```bash
-# karpenter controllerのログ確認
-./scripts/karpenter/test/tail_log.sh
-
 # スケールアップ
-./scripts/karpenter/test/scale_up.sh
+${CONTAINER_PROJECT_ROOT}/scripts/karpenter/test/scale_up.sh
 
 # スケールダウン
-./scripts/karpenter/test/scale_down.sh
+${CONTAINER_PROJECT_ROOT}/scripts/karpenter/test/scale_down.sh
 ```
 
-ログ確認
+# デバッグ
 
 
 ```bash
-$ kubectl get po -n kube-system | grep karpenter
-
-$ kubectl logs -n kube-system -f karpenter-cf47cdf67-x4qxq
+# karpenter controllerのログ確認
+${CONTAINER_PROJECT_ROOT}/scripts/karpenter/tail_log.sh
+```
