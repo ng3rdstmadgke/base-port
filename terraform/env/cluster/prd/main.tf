@@ -30,6 +30,14 @@ output "vpc_id" {
   value = module.eks.vpc.vpc_id
 }
 
+output "eks_cluster_sg_id" {
+  value = module.eks.cluster.cluster_security_group_id
+}
+
+output "eks_node_sg_id" {
+  value = module.eks.cluster.node_security_group_id
+}
+
 locals {
   app_name = "baseport"
   stage = "prd"
@@ -66,6 +74,15 @@ module test-fargate-profile {
       namespace = "fargate-test"
     }
   ]
+}
+
+module efs {
+  source = "../../../module/efs"
+  app_name = local.app_name
+  stage = local.stage
+  vpc_id = module.eks.vpc.vpc_id
+  private_subnets = module.eks.vpc.private_subnets
+  eks_cluster_sg_id = module.eks.cluster.cluster_security_group_id
 }
 
 /**
