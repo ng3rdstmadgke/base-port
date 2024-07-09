@@ -1,0 +1,13 @@
+# Amazon EFS CSI dynamic provisioningの御紹介 | Amazon Web Services ブログ
+# https://aws.amazon.com/jp/blogs/news/amazon-efs-csi-dynamic-provisioning/
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: efs-sc
+provisioner: efs.csi.aws.com
+parameters:
+  # パラメータ
+  # https://github.com/kubernetes-sigs/aws-efs-csi-driver?tab=readme-ov-file#storage-class-parameters-for-dynamic-provisioning
+  provisioningMode: efs-ap
+  fileSystemId: fs-0b3a33fdd77d2f23c
+  directoryPerms: "700"

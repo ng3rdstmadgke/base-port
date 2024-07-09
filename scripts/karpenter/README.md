@@ -16,3 +16,11 @@
 # スケールダウン
 ./scripts/karpenter/test/scale_down.sh
 ```
+
+ログ確認
+
+
+```bash
+$ kubectl get po -n kube-system | grep karpenter
+
+$ kubectl logs -n kube-system -f karpenter-cf47cdf67-x4qxq

@@ -38,6 +38,10 @@ output "eks_node_sg_id" {
   value = module.eks.cluster.node_security_group_id
 }
 
+output "efs_id" {
+  value = module.efs.efs_id
+}
+
 locals {
   app_name = "baseport"
   stage = "prd"

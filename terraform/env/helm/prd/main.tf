@@ -116,3 +116,11 @@ module karpenter {
 module metrics_server {
   source = "../../../module/metrics-server"
 }
+
+module efs_csi_driver {
+  source = "../../../module/efs-csi-driver"
+  app_name = local.app_name
+  stage = local.stage
+  vpc_id = data.aws_eks_cluster.this.vpc_config[0].vpc_id
+  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+}

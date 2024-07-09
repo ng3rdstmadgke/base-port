@@ -1,4 +1,9 @@
 /**
+ * Kubernetes における永続ストレージ | Amazon Web Services ブログ
+ * https://aws.amazon.com/jp/blogs/news/persistent-storage-for-kubernetes/
+ */
+
+/**
  * EFS
  */
 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_file_system
