@@ -8,10 +8,9 @@ EKS環境を構築するプロジェクト
 ## EKSクラスタ作成
 
 ```bash
-cd ${CONTAINER_PROJECT_ROOT}/teraform/env/cluster/prd
-terraform init
-terraform plan
-terraform apply -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/cluster/prd init
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/cluster/prd plan
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/cluster/prd apply -auto-approve
 ```
 
 `~/.kube/config` にクラスタを登録
@@ -45,10 +44,9 @@ kubectl describe -n kube-system configmap/aws-auth
 ## Helmチャートのインストール
 
 ```bash
-cd ${CONTAINER_PROJECT_ROOT}/teraform/env/helm/prd
-terraform init
-terraform plan
-terraform apply -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd init
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd plan
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd apply -auto-approve
 ```
 
 ## セットアップスクリプトの実行
@@ -62,9 +60,6 @@ terraform apply -auto-approve
 # 削除
 
 ```bash
-cd ${CONTAINER_PROJECT_ROOT}/teraform/env/helm/prd
-terraform destroy -auto-approve
-
-cd ${CONTAINER_PROJECT_ROOT}/teraform/env/cluster/prd
-terraform destroy -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd destroy -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/cluster/prd destroy -auto-approve
 ```

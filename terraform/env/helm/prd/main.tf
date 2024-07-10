@@ -48,6 +48,11 @@ output "keda_operator_role_arn" {
   value = module.keda.keda_operator_role_arn
 }
 
+output "ascp_test_service_account" {
+  value = module.secret_store_csi_driver.ascp_test_service_account
+}
+
+
 // Data Source: aws_eks_cluster
 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster
 data "aws_eks_cluster" "this" {
@@ -122,5 +127,12 @@ module efs_csi_driver {
   app_name = local.app_name
   stage = local.stage
   vpc_id = data.aws_eks_cluster.this.vpc_config[0].vpc_id
+  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+}
+
+module secret_store_csi_driver {
+  source = "../../../module/secret-store-csi-driver"
+  app_name = local.app_name
+  stage = local.stage
   eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
