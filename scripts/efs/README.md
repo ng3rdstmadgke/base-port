@@ -31,6 +31,30 @@ $ kubectl get pvc
 NAME      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
 efs-pvc   Bound    pvc-ccd02133-a89e-47a4-ad3d-9e59f62a7f49   5Gi        RWX            efs-sc         <unset>                 10m
 
+# pvcの詳細
+$ kubectl describe pvc efs-pvc
+Name:          efs-pvc
+Namespace:     default
+StorageClass:  efs-sc
+Status:        Bound
+Volume:        pvc-4bd29497-4c67-4eec-af6e-d898df48527d
+Labels:        <none>
+Annotations:   pv.kubernetes.io/bind-completed: yes
+               pv.kubernetes.io/bound-by-controller: yes
+               volume.beta.kubernetes.io/storage-provisioner: efs.csi.aws.com
+               volume.kubernetes.io/storage-provisioner: efs.csi.aws.com
+Finalizers:    [kubernetes.io/pvc-protection]
+Capacity:      5Gi
+Access Modes:  RWX
+VolumeMode:    Filesystem
+Used By:       efs-app
+Events:
+  Type    Reason                 Age                From                                                                                     Message
+  ----    ------                 ----               ----                                                                                     -------
+  Normal  ExternalProvisioning   68s (x2 over 68s)  persistentvolume-controller                                                              Waiting for a volume to be created either by the external provisioner 'efs.csi.aws.com' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
+  Normal  Provisioning           68s                efs.csi.aws.com_efs-csi-controller-55c9f799f-n6vqh_d1ab6d7e-0a1c-4849-a4b3-e0acbe6a59c0  External provisioner is provisioning volume for claim "default/efs-pvc"
+  Normal  ProvisioningSucceeded  68s                efs.csi.aws.com_efs-csi-controller-55c9f799f-n6vqh_d1ab6d7e-0a1c-4849-a4b3-e0acbe6a59c0  Successfully provisioned volume pvc-4bd29497-4c67-4eec-af6e-d898df48527d
+
 # pvの確認
 $ kubectl get pv
 NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
