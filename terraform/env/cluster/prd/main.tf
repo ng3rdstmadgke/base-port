@@ -42,6 +42,14 @@ output "efs_id" {
   value = module.efs.efs_id
 }
 
+output "private_subnets" {
+  value = module.eks.vpc.private_subnets
+}
+
+output "public_subnets" {
+  value = module.eks.vpc.public_subnets
+}
+
 locals {
   app_name = "baseport"
   stage = "prd"

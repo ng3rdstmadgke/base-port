@@ -52,6 +52,14 @@ output "ascp_test_service_account" {
   value = module.secret_store_csi_driver.ascp_test_service_account
 }
 
+output "ingress_dev_sg" {
+  value = module.albc.ingress_dev_sg
+}
+
+output "ingress_prd_sg" {
+  value = module.albc.ingress_prd_sg
+}
+
 
 // Data Source: aws_eks_cluster
 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster

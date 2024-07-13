@@ -1,0 +1,95 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress-dev-sample
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: ingress-dev-sample
+spec:
+  selector:
+    matchLabels:
+      run: app
+  template:
+    metadata:
+      labels:
+        run: app
+    spec:
+      containers:
+      - name: php-apache
+        image: registry.k8s.io/hpa-example
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: 128Mi
+            cpu: 200m  # 1000m = 1 core
+          requests:
+            memory: 128Mi
+            cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-svc
+  namespace: ingress-dev-sample
+spec:
+  ports:
+  - port: 80
+  selector:
+    run: app
+---
+# Ingress | Kubernetes API Reference:
+# https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#ingress-v1-networking-k8s-io
+# Ingress | AWS Load Balancer Controller:
+# https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-alb
+  namespace: ingress-dev-sample
+  # Ingress annotations - AWS Load Balancer Controller
+  # https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/guide/ingress/annotations/
+  annotations:
+    # Ingressが属するグループ名。同じグループを指定すると、同じALBにIngressが紐づけられます。 (デフォルトではどのグループにも属さない)
+    alb.ingress.kubernetes.io/group.name: baseport-dev
+    # 外部ALB (internet-facing | internal)
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    # 外部ALBなのでパブリックサブネットを指定
+    alb.ingress.kubernetes.io/subnets: subnet-09413df8c627eeb8a,subnet-0199662ef38b21935,subnet-0d29de524d3d61515
+    alb.ingress.kubernetes.io/tags: "PROJECT=BASEPORT_PRD"
+    # リスナーのポートにhttp:80とhttps:443を指定
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    # すべてのHTTPリスナーをHTTPSにリダイレクトさせる設定
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    # *.dev.baseport.net の証明書
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-1:674582907715:certificate/e30f56be-c73d-4068-8ee7-3661d50f7447
+    alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0
+
+    # ALBに設定するセキュリティグループ
+    # alb.ingress.kubernetes.io/security-groups: baseport-prd-IngressPrd
+
+    # ALBに追加のバックエンドsgを追加する。Node, Podのセキュリティグループはバックエンドsgからのインバウンドトラフィックを許可する。
+    # alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
+
+    # Custom attributes - Annotation | AWS Load Balancer Controller:
+    # https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/guide/ingress/annotations/#custom-attributes
+    # alb.ingress.kubernetes.io/healthcheck-path: /ping
+    alb.ingress.kubernetes.io/load-balancer-attributes: deletion_protection.enabled=true
+spec:
+  ingressClassName: alb
+  rules:
+    - host: sample.dev.baseport.net
+      http:
+        paths:
+          - path: /
+            backend:
+              service:
+                name: app-svc
+                port:
+                  number: 80
+            pathType: Prefix
