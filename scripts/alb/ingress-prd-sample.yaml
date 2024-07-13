@@ -58,6 +58,9 @@ metadata:
     alb.ingress.kubernetes.io/group.name: baseport-prd
     # 外部ALB (internet-facing | internal)
     alb.ingress.kubernetes.io/scheme: internet-facing
+    # Podへのトラフィックのルーティング方法を指定 
+    # - instance (default): ALBからのトラフィックはNodePortを経由してPodに到達する
+    # - ip: ALBからのトラフィックをClusterIPを利用して直接Podにルーティングする (EKS Fargateの場合は ip でなければならない)
     alb.ingress.kubernetes.io/target-type: ip
     # 外部ALBなのでパブリックサブネットを指定
     alb.ingress.kubernetes.io/subnets: subnet-09413df8c627eeb8a,subnet-0199662ef38b21935,subnet-0d29de524d3d61515
