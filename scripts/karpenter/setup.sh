@@ -70,7 +70,7 @@ spec:
           values: ["spot"]
         - key: karpenter.k8s.aws/instance-family
           operator: In
-          values: ["t3", "t3a"]
+          values: ["t3", "t3a", "m5", "m5a", "m6i", "m6a", "m7i", "m7a"]
         - key: "karpenter.k8s.aws/instance-cpu"
           operator: In
           values: ["2", "4"]
