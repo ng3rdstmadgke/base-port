@@ -74,9 +74,9 @@ spec:
         - key: "karpenter.k8s.aws/instance-cpu"
           operator: In
           values: ["2", "4"]
-        - key: "karpenter.k8s.aws/instance-memory"
-          operator: In
-          values: ["4096", "8192", "16384"]
+        #- key: "karpenter.k8s.aws/instance-memory"
+        #  operator: In
+        #  values: ["4096", "8192", "16384"]
       nodeClassRef:
         apiVersion: karpenter.k8s.aws/v1beta1
         kind: EC2NodeClass
