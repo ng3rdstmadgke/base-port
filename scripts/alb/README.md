@@ -20,10 +20,10 @@
 
 ```bash
 # dev用のALBとそれに紐づくサンプルアプリをデプロイ
-kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/ingress-dev-sample.yml
+kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/ingress-dev-sample.yaml
 
 # prd用のALBとそれに紐づくサンプルアプリをデプロイ
-kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/ingress-prd-sample.yml
+kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/ingress-prd-sample.yaml
 ```
 
 下記にアクセス
@@ -52,7 +52,7 @@ dev用
 kubectl -n ingress-dev-sample edit app-alb
 
 # 削除
-kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/ingress-dev-sample.yml
+kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/ingress-dev-sample.yaml
 ```
 
 prd用
@@ -62,7 +62,7 @@ prd用
 kubectl -n ingress-prd-sample edit app-alb
 
 # 削除
-kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/ingress-prd-sample.yml
+kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/ingress-prd-sample.yaml
 ```
 
 # テスト用のリソース

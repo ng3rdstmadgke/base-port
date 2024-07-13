@@ -1,28 +1,50 @@
-#!/bin/bash
-
-set -ex
-
-SCRIPT_DIR=$(cd $(dirname $0); pwd)
-cd $SCRIPT_DIR
-
-
-# Kuberentesの水平オートスケール(HPA v2) | Qiita:
-# - https://qiita.com/shmurata/items/e6bd8c56f3e4f9a8e384
-# HorizontalPodAutoscaler API Reference
-# - https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/
-# Run and expose php-apache server - HorizontalPodAutoscaler Walkthrough
-# - https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/#run-and-expose-php-apache-server
-cat <<EOF | kubectl apply -f -
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hpa-test-deploy
+spec:
+  selector:
+    matchLabels:
+      run: hpa-test-app
+  template:
+    metadata:
+      labels:
+        run: hpa-test-app
+    spec:
+      containers:
+      - name: php-apache
+        image: registry.k8s.io/hpa-example
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            memory: 256Mi
+            cpu: 500m  # 1000m = 1 core
+          requests:
+            memory: 128Mi
+            cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hpa-test-svc
+spec:
+  ports:
+  - port: 80
+  selector:
+    run: hpa-test-app
+---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: php-apache
+  name: hpa-test
 spec:  # https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/horizontal-pod-autoscaler-v2/#HorizontalPodAutoscalerSpec
   # スケール対象のリソースの種類と名前を指定
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: php-apache
+    name: hpa-test-deploy
   minReplicas: 1
   maxReplicas: 10
   metrics:  # 必要なレプリカ数を決定するためのメトリクスのリスト
@@ -32,4 +54,3 @@ spec:  # https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/
       target:  # メトリクスの目標値。この目標値を維持すようにレプリカ数が調整される。
         type: Utilization  # Utilization(使用率), Value(値), AverageValue(平均値) のいずれかを指定
         averageUtilization: 50  # メトリクスの目標値(全ポッドの平均値(%))。 resourceメトリックソースタイプに対してのみ有効。
-EOF
