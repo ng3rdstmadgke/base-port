@@ -60,7 +60,7 @@ metadata:
     # - internet-facing: インターネットに公開されるALB (kubernetes.io/role/elb=1 のタグが付与されているサブネットにALBが作成される)
     # - internal: VPC内部にのみ公開されるALB (kubernetes.io/role/internal-elb=1 のタグが付与されているサブネットにALBが作成される)
     alb.ingress.kubernetes.io/scheme: internet-facing
-    # Podへのトラフィックのルーティング方法を指定 
+    # Podへのトラフィックのルーティング方法を指定
     # - instance (default): ALBからのトラフィックはNodePortを経由してPodに到達する
     # - ip: ALBからのトラフィックをClusterIPを利用して直接Podにルーティングする (EKS Fargateの場合は ip でなければならない)
     alb.ingress.kubernetes.io/target-type: ip
@@ -73,13 +73,13 @@ metadata:
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     # *.dev.baseport.net の証明書
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-1:674582907715:certificate/e30f56be-c73d-4068-8ee7-3661d50f7447
-    alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0
+    #alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0
 
     # ALBに設定するセキュリティグループ
-    # alb.ingress.kubernetes.io/security-groups: baseport-prd-IngressPrd
+    alb.ingress.kubernetes.io/security-groups: baseport-prd-IngressDev
 
     # ALBに追加のバックエンドsgを追加する。Node, Podのセキュリティグループはバックエンドsgからのインバウンドトラフィックを許可する。
-    # alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
+    alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
 
     # Custom attributes - Annotation | AWS Load Balancer Controller:
     # https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/guide/ingress/annotations/#custom-attributes

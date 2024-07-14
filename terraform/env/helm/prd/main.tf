@@ -38,6 +38,10 @@ provider "aws" {
   }
 }
 
+variable "albc_ingress_dev_cidr_blocks" {
+  type = list(string)
+}
+
 locals {
   app_name = "baseport"
   stage = "prd"
@@ -100,6 +104,7 @@ module albc {
   // このコマンドで取得できる:
   // aws eks describe-cluster --name baseport-prd --output text --query "cluster.identity.oidc.issuer"
   eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+  ingress_dev_cidr_blocks = var.albc_ingress_dev_cidr_blocks
 }
 
 module keda {

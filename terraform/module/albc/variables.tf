@@ -3,6 +3,15 @@ variable stage {}
 variable vpc_id {}
 variable eks_oidc_issure_url {}
 
+variable ingress_dev_cidr_blocks {
+  type = list(string)
+  default = ["0.0.0.0/0"]
+}
+
+variable ingress_prd_cidr_blocks {
+  type = list(string)
+  default = ["0.0.0.0/0"]
+}
 
 data "aws_caller_identity" "self" { }
 data "aws_region" "self" {}
