@@ -5,6 +5,7 @@ package-mode = false
 python = "^3.10"
 fastapi = "^0.111.1"
 uvicorn = {extras = ["standard"], version = "^0.30.3"}
+pydantic-settings = "^2.3.4"
 
 
 [build-system]
