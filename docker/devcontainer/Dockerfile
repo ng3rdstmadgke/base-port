@@ -59,10 +59,14 @@ RUN wget https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_linux_am
     mv terraform /usr/local/bin/ && \
     terraform -install-autocomplete 
 
+# Kustomizeのインストール
+# https://kubectl.docs.kubernetes.io/installation/kustomize/binaries/
+RUN curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash && \
+    mv kustomize /usr/local/bin/
+
 # helmインストール
 # https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_linux_amd64.zip
-RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash && \
-    helm completion bash > /etc/bash_completion.d/helm
+RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 # helmのリポジトリにeks, kedaを追加
 RUN helm repo add eks https://aws.github.io/eks-charts && \
@@ -74,3 +78,6 @@ RUN helm repo add eks https://aws.github.io/eks-charts && \
 RUN curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 && \
     sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd && \
     rm argocd-linux-amd64
+
+RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/home/vscode/.pypoetry python3 - && \
+    chown -R vscode:vscode /home/vscode/.pypoetry

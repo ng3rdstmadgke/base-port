@@ -11,6 +11,12 @@ if [ "$?" -eq "0" ]; then
   export AWS_ACCOUNT_ID=$(echo $STS_GET_CALLER_IDENTITY | jq -r '.Account')
 fi
 
-export PATH=$PATH:/usr/local/go/bin
+export PATH="$PATH:/usr/local/go/bin"
+# poetry path
+export PATH="$PATH:/home/vscode/.pypoetry/bin"
 
-source /etc/bash_completion.d/helm
+source <(kubectl completion bash)
+source <(helm completion bash)
+source <(argocd completion bash)
+source <(kustomize completion bash)
+source <(poetry completions bash)
