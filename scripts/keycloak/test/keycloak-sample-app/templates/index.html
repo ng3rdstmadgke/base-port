@@ -2,6 +2,31 @@
 {% block title %}Top{% endblock %}
 {% block content %}
 <div>
-  <h1>Hello World</h1>
+<div id="app">
+  <code>[[id_token_payload]]</code>
+  <code>[[token_response]]</code>
+
 </div>
+
+<script>
+const { createApp, ref } = Vue
+
+const app = createApp({
+  // Composition API: setup(): https://ja.vuejs.org/api/composition-api-setup
+  setup() {
+    const id_token_payload = localStorage.getItem("id_token_payload")
+    const token_response = localStorage.getItem("token_response")
+    return {
+       id_token_payload,
+       token_response
+    }
+  },
+  mounted() {
+  },
+  delimiters: ['[[', ']]']
+})
+app.mount('#app')
+</script>
+</div>
+
 {% endblock %}
