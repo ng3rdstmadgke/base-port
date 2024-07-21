@@ -79,21 +79,6 @@ def token(data: OidcModeTokenRequest):
         "id_token_payload": id_token_payload,
     }
 
-# /auth/realms/{env.realm}/protocol/openid-connect/revoke
-
-# https://www.keycloak.org/docs/latest/securing_apps/#_token_introspection_endpoint
-#introspection_endpoint = f"{env.authorization_server}/realms/{env.realm}/protocol/openid-connect/token/introspect"
-#secret = base64.b64encode(f"{env.client_id}:{env.client_secret}".encode()).decode()
-#res = requests.post(
-#    url=introspection_endpoint,
-#    headers={
-#        "Content-Type": "application/x-www-form-urlencoded",
-#        "Authorization": f"Basic {secret}",
-#    },
-#    data={
-#        "token": "authorization_code",
-#    }
-#)
 
 ####################################
 # 静的ファイル
