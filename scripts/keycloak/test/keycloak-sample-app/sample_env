@@ -1,0 +1,4 @@
+REALM=demo
+CLIENT_ID=demo-client
+CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+AUTHORIZATION_SERVER=https://keycloak.dev.baseport.net

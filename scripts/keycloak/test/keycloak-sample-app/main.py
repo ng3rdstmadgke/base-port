@@ -157,7 +157,7 @@ async def token(data: TokenRequest, response: Response):
 
     # IDトークンの検証
     id_token_payload = verify_id_token(token_response.id_token)
-    print(id_token_payload)
+    #print(id_token_payload)
 
     if id_token_payload.nonce != data.nonce:
         raise HTTPException(status_code=400, detail="nonce not match.")
