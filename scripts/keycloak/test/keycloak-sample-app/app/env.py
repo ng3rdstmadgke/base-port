@@ -5,7 +5,7 @@ class Environment (BaseSettings):
     client_id: str
     client_secret: str
     authorization_server: str
-    realm: str = "demo"
+    realm: str
 
     pass
 

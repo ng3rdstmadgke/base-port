@@ -27,3 +27,13 @@ class TokenEndpointResponse(BaseModel):
     scope: str
     token_type: str
     refresh_token: Optional[str] = None  # 認証リクエストで access_type パラメータが offline に設定されている場合にのみ
+
+
+class UserinfoResponse(BaseModel):
+    sub: str
+    email_verified: bool
+    name: str
+    preferred_username: str
+    given_name: str
+    family_name: str
+    email: str

@@ -29,9 +29,9 @@ const app = createApp({
     onMounted(async () => {
       let res = await fetch("/api/content", { method: "GET" })
       if (!res.ok) {
-        let msg = `${res.status} ${res.statusText}: verify failed.`
+        let msg = `${res.status} ${res.statusText}: ${await res.text()}`
         alert(msg)
-        throw new Error(msg)
+        location.href = "/login"
       }
       content.value = await res.json()
     })

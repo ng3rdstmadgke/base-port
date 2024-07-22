@@ -10,16 +10,18 @@ from fastapi.templating import Jinja2Templates
 
 from app.env import get_env, Environment
 from app.session import SessionData, session_backend, session_cookie, session_verifier
-from app.schema import IdTokenPayload, TokenEndpointResponse
 from app.auth import (
     get_token,
     refresh_token,
+    revoke_token,
     verify_id_token,
     verify_access_token,
     introspect_token,
+    userinfo,
 )
 
 env = get_env()
+print(env)
 
 app = FastAPI(
     redoc_url="/api/redoc",
@@ -95,24 +97,23 @@ async def authorize(
     """
     if access_token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is required", headers={"WWW-Authenticate": "Bearer"})
+    print(f"[cookie] access_token: {access_token}")
     try:
         # アクセストークンの検証
         verify_access_token(access_token)
-        print(f"access_token: {access_token}")
         print(session_data.model_dump_json(indent=2))
-        return session_data.id_token_payload
+        return session_data
     except jwt.ExpiredSignatureError as e:  # exceptions: https://pyjwt.readthedocs.io/en/stable/api.html#exceptions
         print("{}\n{}".format(str(e), traceback.format_exc()))
-        if session_data.refresh_token is None:
+        if session_data.token_response.refresh_token is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token expired and no refresh token available", headers={"WWW-Authenticate": "Bearer"})
         
         # リフレッシュトークンでアクセストークンを更新
-        token_response = refresh_token(session_data.refresh_token)
+        token_response = refresh_token(session_data.token_response.refresh_token)
 
         # セッションの更新
         new_session_data = SessionData(
             token_response=token_response,
-            refresh_token=token_response.refresh_token,
             id_token_payload=session_data.id_token_payload,
         )
         await session_backend.update(session_id, new_session_data)
@@ -125,9 +126,8 @@ async def authorize(
             httponly=True,  # JavaScriptからCookieにアクセスできないようにする
             samesite="strict",  # 外部サイトからの遷移時にCookieが送信されないようにする
         )
-        print(f"access_token: {token_response.access_token}")
         print(new_session_data.model_dump_json(indent=2))
-        return session_data.id_token_payload
+        return session_data
     except jwt.PyJWKError as e:  # exceptions: https://pyjwt.readthedocs.io/en/stable/api.html#exceptions
         print("{}\n{}".format(str(e), traceback.format_exc()))
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token", headers={"WWW-Authenticate": "Bearer"})
@@ -161,13 +161,12 @@ async def token(data: TokenRequest, response: Response):
     session = uuid4()
     session_data = SessionData(
         token_response=token_response,  # デバッグ用の情報
-        refresh_token=token_response.refresh_token,
         id_token_payload=id_token_payload,
     )
     await session_backend.create(session, session_data)
     session_cookie.attach_to_response(response, session)
 
-    # Cookieにアクセストークンを保存
+    # Cookieにアクセストークンをセット
     response.set_cookie(
         key="access_token",
         value=token_response.access_token,
@@ -181,11 +180,32 @@ async def token(data: TokenRequest, response: Response):
         "token_type": token_response.token_type,
     }
 
+@app.post("/api/revoke", dependencies=[Depends(session_cookie)])
+async def api_revoke(
+    response: Response,
+    session_data: SessionData = Depends(authorize),
+    session_id: UUID = Depends(session_cookie),
+):
+    access_token = session_data.token_response.access_token
+    # トークンを取り消す
+    print("トークンを取り消す")
+    revoke_token(access_token)
+    # セッションを削除
+    print("セッションを削除")
+    await session_backend.delete(session_id)
+    #CookieからセッションIDを削除 
+    print("CookieからセッションIDを削除")
+    session_cookie.delete_from_response(response)
+    # Cookieからアクセストークンを削除
+    print("Cookieからアクセストークンを削除")
+    response.delete_cookie("access_token")
+    return {"message": "revoke token"}
+
 @app.get("/api/content", dependencies=[Depends(session_cookie)])
 def api_content(
-   id_token_payload: str = Depends(authorize)
+   session_data: SessionData = Depends(authorize)
 ):
-    return id_token_payload
+    return session_data.id_token_payload
 
 #############################################
 # Debug API
@@ -199,8 +219,10 @@ def debug_introspect(data: IntrospectRequest):
     # active が False の場合はトークンが無効
     return res
 
-
-
+@app.post("/api/debug/userinfo", tags=["debug"])
+def debug_userinfo(data: IntrospectRequest):
+    res = userinfo(data.token)
+    return res
 
 ####################################
 # 静的ファイル

@@ -7,7 +7,13 @@ from jwt.algorithms import RSAAlgorithm
 from fastapi import HTTPException
 
 from app.env import get_env, Environment
-from app.schema import IdTokenPayload, TokenEndpointResponse
+from app.schema import IdTokenPayload, TokenEndpointResponse, UserinfoResponse
+
+#############################################
+# 利用可能なAPI一覧
+# https://keycloak.dev.baseport.net/realms/demo/.well-known/openid-configuration
+# 
+#############################################
 
 
 def get_token(code: str, env: Environment = get_env()) -> TokenEndpointResponse:
@@ -16,18 +22,21 @@ def get_token(code: str, env: Environment = get_env()) -> TokenEndpointResponse:
     """
     # https://www.keycloak.org/docs/latest/securing_apps/#token-endpoint
     token_endpoint = f"{env.authorization_server}/realms/{env.realm}/protocol/openid-connect/token"
+    data={
+        "code": code,
+        "client_id": env.client_id,
+        "client_secret": env.client_secret,
+        "redirect_uri": "http://localhost:8000/code",
+        "grant_type": "authorization_code",
+    }
     response = requests.post(
         url=token_endpoint,
         headers={ "Content-Type": "application/x-www-form-urlencoded" },
-        data={
-            "code": code,
-            "client_id": env.client_id,
-            "client_secret": env.client_secret,
-            "redirect_uri": "http://localhost:8000/code",
-            "grant_type": "authorization_code",
-        }
+        data=data,
     )
     if response.status_code != 200:
+        print(f"url: POST {token_endpoint}")
+        print(f"data: {data}")
         print(f"status_code: {response.status_code}, text: {response.text}")
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
@@ -36,20 +45,44 @@ def get_token(code: str, env: Environment = get_env()) -> TokenEndpointResponse:
 
 def refresh_token(refresh_token: str, env: Environment = get_env()) -> TokenEndpointResponse:
     token_endpoint = f"{env.authorization_server}/realms/{env.realm}/protocol/openid-connect/token"
+    data = {
+        "client_id": env.client_id,
+        "client_secret": env.client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token",
+    }
     response = requests.post(
         url=token_endpoint,
         headers = { "Content-Type": "application/x-www-form-urlencoded"},
-        data = {
-            "client_id": env.client_id,
-            "client_secret": env.client_secret,
-            "refresh_token": refresh_token,
-            "grant_type": "refresh_token",
-        }
+        data = data,
     )
     if response.status_code != 200:
+        print(f"url: POST {token_endpoint}")
+        print(f"data: {data}")
         print(f"status_code: {response.status_code}, text: {response.text}")
         raise HTTPException(status_code=response.status_code, detail=response.text)
     return TokenEndpointResponse.model_validate(response.json())
+
+
+def revoke_token(token: str, token_type_hint: str = "access_token", env: Environment = get_env()):
+    # https://www.keycloak.org/docs/latest/securing_apps/#_token_revocation_endpoint
+    revoke_endpoint = f"{env.authorization_server}/realms/{env.realm}/protocol/openid-connect/revoke"
+    data = {
+        "client_id": env.client_id,
+        "client_secret": env.client_secret,
+        "token": token,
+        "token_type_hint": token_type_hint,
+    }
+    response = requests.post(
+        url=revoke_endpoint,
+        headers = { "Content-Type": "application/x-www-form-urlencoded"},
+        data = data,
+    )
+    if response.status_code != 200:
+        print(f"url: POST {revoke_endpoint}")
+        print(f"data: {data}")
+        print(f"status_code: {response.status_code}, text: {response.text}")
+        raise HTTPException(status_code=response.status_code, detail=response.text)
 
 
 def verify_id_token(id_token: str, env: Environment = get_env()) -> IdTokenPayload:
@@ -174,5 +207,17 @@ def introspect_token(token, env: Environment = get_env()):
         raise HTTPException(status_code=response.status_code, detail=response.text)
     return response.json()
 
-def revoke_token():
-    pass
+def userinfo(token: str, env: Environment = get_env()) -> UserinfoResponse:
+    # https://www.keycloak.org/docs/latest/securing_apps/#userinfo-endpoint
+    userinfo_endpoint = f"{env.authorization_server}/realms/{env.realm}/protocol/openid-connect/userinfo"
+    response = requests.get(
+        url=userinfo_endpoint,
+        headers={
+            "Authorization": f"Bearer {token}",
+        }
+    )
+    if response.status_code != 200:
+        print(f"url: GET {userinfo_endpoint}")
+        print(f"status_code: {response.status_code}, text: {response.text}")
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+    return UserinfoResponse.model_validate(response.json())

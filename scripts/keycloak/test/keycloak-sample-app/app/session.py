@@ -9,7 +9,6 @@ from app.schema import IdTokenPayload, TokenEndpointResponse
 
 class SessionData(BaseModel):
     token_response: TokenEndpointResponse
-    refresh_token: Optional[str]
     id_token_payload: IdTokenPayload
 
 #############################################

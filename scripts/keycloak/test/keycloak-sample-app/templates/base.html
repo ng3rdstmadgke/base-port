@@ -30,7 +30,7 @@
             id="logout_btn"
             type="button"
             class="btn btn-secondary"
-            onclick="AuthUtil.logout(); location.href='/login'">
+            onclick="logout()">
             <i class="bi bi-box-arrow-right"></i>
             Logout
           </button>
@@ -39,7 +39,6 @@
     </nav>
     <div class="hp_fixed_alert_wrapper">
       <div class="px-3" id="js_kintaro_alert" >
-
       </div>
     </div>
 
@@ -49,6 +48,14 @@
     </div>
   </div>
   <script>
+    async function logout() {
+      let res = await fetch("/api/revoke", { method: "POST" })
+      if (!res.ok) {
+        let msg = `${res.status} ${res.statusText}: ${await res.text()}`
+        alert(msg)
+      }
+      location.href = '/login'
+    }
     /*
     if (AuthUtil.isAuthenticated()) {
       document.getElementById('logout_btn').style.display = 'block'
