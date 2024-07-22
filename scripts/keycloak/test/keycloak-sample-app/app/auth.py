@@ -1,3 +1,4 @@
+import json
 import traceback
 import base64
 
@@ -40,6 +41,7 @@ def get_token(code: str, env: Environment = get_env()) -> TokenEndpointResponse:
         print(f"status_code: {response.status_code}, text: {response.text}")
         raise HTTPException(status_code=response.status_code, detail=response.text)
 
+    print(f"[get_token][token_endpoint_response]: {json.dumps(response.json(), indent=2)}")
     return TokenEndpointResponse.model_validate(response.json())
 
 
@@ -61,6 +63,7 @@ def refresh_token(refresh_token: str, env: Environment = get_env()) -> TokenEndp
         print(f"data: {data}")
         print(f"status_code: {response.status_code}, text: {response.text}")
         raise HTTPException(status_code=response.status_code, detail=response.text)
+    print(f"[refresh_token][token_endpoint]: {json.dumps(response.json(), indent=2)}")
     return TokenEndpointResponse.model_validate(response.json())
 
 
@@ -133,6 +136,7 @@ def verify_id_token(id_token: str, env: Environment = get_env()) -> IdTokenPaylo
     # typ クレームを検証（今回はIDトークンであることを確認）
     if "typ" not in payload or payload["typ"] != "ID":
         raise HTTPException(status_code=400, detail="Not ID token.")
+    print(f"[verify_id_token][id_token_payload]: {json.dumps(payload, indent=2)}")
     return IdTokenPayload.model_validate(payload)
 
 
@@ -205,6 +209,7 @@ def introspect_token(token, env: Environment = get_env()):
     if response.status_code != 200:
         print(f"status_code: {response.status_code}, text: {response.text}")
         raise HTTPException(status_code=response.status_code, detail=response.text)
+    print(f"[introspect_token][introspection_endpoint_response]: {json.dumps(response.json(), indent=2)}")
     return response.json()
 
 def userinfo(token: str, env: Environment = get_env()) -> UserinfoResponse:
@@ -220,4 +225,5 @@ def userinfo(token: str, env: Environment = get_env()) -> UserinfoResponse:
         print(f"url: GET {userinfo_endpoint}")
         print(f"status_code: {response.status_code}, text: {response.text}")
         raise HTTPException(status_code=response.status_code, detail=response.text)
+    print(f"[userinfo][userinfo_endpoint_response]: {json.dumps(response.json(), indent=2)}")
     return UserinfoResponse.model_validate(response.json())
