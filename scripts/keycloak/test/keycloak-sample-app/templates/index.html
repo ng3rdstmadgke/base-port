@@ -14,14 +14,13 @@ const { createApp, ref } = Vue
 const app = createApp({
   // Composition API: setup(): https://ja.vuejs.org/api/composition-api-setup
   setup() {
-    const id_token_payload = localStorage.getItem("id_token_payload")
-    const token_response = localStorage.getItem("token_response")
-    return {
-       id_token_payload,
-       token_response
-    }
   },
   mounted() {
+    if (AuthUtil.isAuthenticated()) {
+      location.href = "/content"
+    } else {
+      location.href = "/login"
+    }
   },
   delimiters: ['[[', ']]']
 })

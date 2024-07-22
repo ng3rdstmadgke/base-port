@@ -1,3 +1,21 @@
+class CommonUtil {
+  static randomString(n = 16) {
+    const S = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    return Array.from(Array(n)).map(()=>S[Math.floor(Math.random()*S.length)]).join('')
+  }
+
+  static parseQuery(location_search) {
+    // NOTE: ... はスプレッド構文。[... iter] でiterの要素を展開して配列にする。
+    let query = [
+        ... (new URLSearchParams(location_search).entries())
+      ].reduce((acc, [k, v]) => {
+        acc[k] = v;
+        return acc;
+      }, {})
+    return query
+  }
+}
+
 class CookieUtil {
   static get(key) {
     let obj = Object.fromEntries(
@@ -15,7 +33,10 @@ class CookieUtil {
   }
   
   static set(key, value) {
-    document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    // Samesite=Strict: ブラウザは Cookie の元サイトからのリクエストに対してのみ Cookie を送ります
+    // Secure: HTTPS でのみ Cookie を送信します
+    // HttpOnly: JavaScript の Document.cookie API でアクセスできなくなります。
+    document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; SameSite=Strict;`;
   }
 
   static delete(key) {
@@ -23,9 +44,10 @@ class CookieUtil {
   }
 }
 
+
 class AuthUtil {
   static isAuthenticated() {
-    return localStorage.getItem('token_response') !== null;
+    return false;
   }
 
   // CookieからJWTを削除

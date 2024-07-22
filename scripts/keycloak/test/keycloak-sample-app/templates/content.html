@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Content{% endblock %}
+{% block content %}
+<div>
+<div id="app">
+  <div class="mb-5">
+    <h2>ID Token Payload</h2>
+    <table class="table table-bordered">
+      <tr>
+        <th width="250px">Key</th>
+        <th>Value</th>
+      </tr>
+      <tr v-for="(value, key) in content" :key="key">
+        <td>[[ key ]]</td>
+        <td><code>[[ value ]]</code></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<script>
+const { createApp, ref, onMounted } = Vue
+
+const app = createApp({
+  // Composition API: setup(): https://ja.vuejs.org/api/composition-api-setup
+  setup() {
+    const content = ref({})
+
+    onMounted(async () => {
+      let res = await fetch("/api/content", { method: "GET" })
+      if (!res.ok) {
+        let msg = `${res.status} ${res.statusText}: verify failed.`
+        alert(msg)
+        throw new Error(msg)
+      }
+      content.value = await res.json()
+    })
+    
+    return {
+       content
+    }
+  },
+  async mounted() {
+  },
+  delimiters: ['[[', ']]']
+})
+app.mount('#app')
+</script>
+
+<style>
+.table td {
+  table-layout: fixed;
+  word-break: break-all; /* テキストの折り返しを有効にします */
+  word-wrap: break-all; /* テキストの折り返しを有効にします */
+}
+</style>
+</div>
+
+{% endblock %}

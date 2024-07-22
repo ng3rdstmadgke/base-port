@@ -1,20 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Top{% endblock %}
+{% block title %}Login{% endblock %}
 {% block content %}
 <div>
 <div id="app">
   <div class="d-flex justify-content-center">
-    <div class="card" style="width: 400px">
+    <div class="card" >
       <div class="card-body">
         <div class="d-flex justify-content-center my-5">
           <div>
             <h1 class="card-title">Keycloak Sample App</h1>
           </div>
         </div>
-        <div class="d-flex justify-content-end">
-          <div>
-            <button class="btn btn-primary" @click="login">Login</button>
-          </div>
+        <div class="d-grid gap-2">
+            <button class="btn btn-primary" type="button" @click="login">Login</button>
         </div>
       </div>
     </div>
@@ -28,8 +26,8 @@ const app = createApp({
   // Composition API: setup(): https://ja.vuejs.org/api/composition-api-setup
   setup() {
     function login() {
-      const state = "abcdefghij1234567890"
-      const nonce = "0987654321zyxwvutsrqponml"
+      const state = CommonUtil.randomString(32)
+      const nonce = CommonUtil.randomString(32)
       localStorage.setItem("state", state)
       localStorage.setItem("nonce", nonce)
 
@@ -38,13 +36,13 @@ const app = createApp({
         "response_type": "code",
         "client_id": "{{ client_id }}",
         "scope": "openid email profile",
-        "redirect_uri": `${location.origin}/login/code`,
+        "redirect_uri": `${location.origin}/code`,
         "state": state,
         "nonce": nonce,
       }
       const query_str = Object.entries(query).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&")
       const autorization_endpoint_url = `${url}?${query_str}`
-      console.log("autorization_endpoint_url: ", autorization_endpoint_url)
+      console.log("[login] autorization_endpoint_url: ", autorization_endpoint_url)
       location.href = autorization_endpoint_url;
     }
     return {

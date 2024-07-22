@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Top{% endblock %}
+{% block title %}Code{% endblock %}
 {% block content %}
 <div>
 <div id="app">
@@ -14,15 +14,11 @@ const app = createApp({
   async mounted() {
     let state = localStorage.getItem("state")
     let nonce = localStorage.getItem("nonce")
-    console.log("state:", state, "nonce:", nonce)
+    console.log(`[code] state: ${state}, nonce: ${nonce}`)
+
     // GETパラメータをパース
-    let query = [
-        ... (new URLSearchParams(location.search).entries())
-      ].reduce((acc, [k, v]) => {
-        acc[k] = v;
-        return acc;
-      }, {})
-    console.log("query: ", query)
+    let query = CommonUtil.parseQuery(location.search)
+    console.log("[code] query: ", query)
 
     // stateの検証
     if (query.state !== state) {
@@ -45,11 +41,7 @@ const app = createApp({
       throw new Error(`${res.status} ${res.statusText}: verify failed. ${data.detail}`);
     }
 
-    // トークンを保存
-    localStorage.setItem("id_token_payload", JSON.stringify(data.id_token_payload))
-    localStorage.setItem("token_response", JSON.stringify(data.token_response))
-
-    location.href = "/"
+    location.href = "/content"
   },
   delimiters: ['[[', ']]']
 })
