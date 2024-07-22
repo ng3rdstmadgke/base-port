@@ -32,11 +32,14 @@ class CookieUtil {
     return obj[key];
   }
   
-  static set(key, value) {
+  static set(key, value, secure = false, httpOnly = false, sameSite = 'strict') {
     // Samesite=Strict: ブラウザは Cookie の元サイトからのリクエストに対してのみ Cookie を送ります
     // Secure: HTTPS でのみ Cookie を送信します
     // HttpOnly: JavaScript の Document.cookie API でアクセスできなくなります。
-    document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; SameSite=Strict;`;
+    let cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; SameSite=${sameSite};`;
+    cookie += secure ? ' Secure;' : '';
+    cookie += httpOnly ? ' HttpOnly;' : '';
+    document.cookie = cookie
   }
 
   static delete(key) {
@@ -47,11 +50,15 @@ class CookieUtil {
 
 class AuthUtil {
   static isAuthenticated() {
-    return false;
+    return CookieUtil.get("login") === "1"
   }
 
-  // CookieからJWTを削除
-  static logout() {
-    localStorage.removeItem('token_response');
+  static async logout() {
+    let res = await fetch("/api/revoke", { method: "POST" })
+    if (!res.ok) {
+      let msg = `${res.status} ${res.statusText}: ${await res.text()}`
+      alert(msg)
+    }
+    location.href = '/login'
   }
 }

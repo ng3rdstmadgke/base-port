@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 
 from app.env import get_env, Environment
+from app.schema import UserinfoResponse
 from app.session import SessionData, session_backend, session_cookie, session_verifier
 from app.auth import (
     get_token,
@@ -86,22 +87,27 @@ async def content(request: Request):
 # 認証
 #############################################
 
+# NOTE:
+# Depends(session_verifier) を解決するには先にDepends(session_cookie)を解決する必要がある。
+# これは、session_cookie()は取得したセッションIDを取得をresponse.state.session_ids[self.identifier]にセットしており、
+# session_verifier()はresponse.state.session_ids[self.identifier]にセットされたセッションIDを利用するため。
+# サンプルコード: https://jordanisaacs.github.io/fastapi-sessions/guide/getting_started/#create-session-route
 async def authorize(
     response: Response,
     access_token: str | None = Cookie(default=None),  # Cookieからアクセストークンを取得
-    session_data: SessionData = Depends(session_verifier),  # セッションの検証・取得
     session_id: UUID = Depends(session_cookie),  # セッションID
+    session_data: SessionData = Depends(session_verifier),  # セッションの検証・取得
 ):
     """
     アクセストークンの検証・リフレッシュを行う
     """
     if access_token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is required", headers={"WWW-Authenticate": "Bearer"})
-    print(f"[cookie] access_token: {access_token}")
+    #print(f"[cookie] access_token: {access_token}")
     try:
         # アクセストークンの検証
         verify_access_token(access_token)
-        print(session_data.model_dump_json(indent=2))
+        #print(session_data.model_dump_json(indent=2))
         return session_data
     except jwt.ExpiredSignatureError as e:  # exceptions: https://pyjwt.readthedocs.io/en/stable/api.html#exceptions
         print("{}\n{}".format(str(e), traceback.format_exc()))
@@ -126,7 +132,7 @@ async def authorize(
             httponly=True,  # JavaScriptからCookieにアクセスできないようにする
             samesite="strict",  # 外部サイトからの遷移時にCookieが送信されないようにする
         )
-        print(new_session_data.model_dump_json(indent=2))
+        #print(new_session_data.model_dump_json(indent=2))
         return session_data
     except jwt.PyJWKError as e:  # exceptions: https://pyjwt.readthedocs.io/en/stable/api.html#exceptions
         print("{}\n{}".format(str(e), traceback.format_exc()))
@@ -143,7 +149,7 @@ class TokenRequest(BaseModel):
     code: str
     nonce: str
 
-@app.post("/api/token")
+@app.post("/api/token", tags=["api"])
 async def token(data: TokenRequest, response: Response):
     """認可コードをアクセストークンに交換する"""
     # IDトークン、アクセストークン、リフレッシュトークンを取得
@@ -175,37 +181,54 @@ async def token(data: TokenRequest, response: Response):
         samesite="strict",  # 外部サイトからの遷移時にCookieが送信されないようにする
     )
 
+    # ログイン判定フラグをセット
+    response.set_cookie(
+        key="login",
+        value="1",
+        secure=False,
+        httponly=False,
+        samesite="strict",
+    )
+
     return {
         "access_token": token_response.access_token,
         "token_type": token_response.token_type,
     }
 
-@app.post("/api/revoke", dependencies=[Depends(session_cookie)])
+@app.get("/api/userinfo", response_model=UserinfoResponse, tags=["api"])
+def api_userinfo(
+    session_data: SessionData = Depends(authorize),
+):
+    response = userinfo(session_data.token_response.access_token)
+    return response
+
+
+@app.get("/api/session_data", response_model=SessionData, tags=["api"])
+def api_content(
+   session_data: SessionData = Depends(authorize)
+):
+    return session_data
+
+
+@app.post("/api/revoke", tags=["api"])
 async def api_revoke(
     response: Response,
     session_data: SessionData = Depends(authorize),
     session_id: UUID = Depends(session_cookie),
 ):
+    """トークンを取り消す"""
     access_token = session_data.token_response.access_token
     # トークンを取り消す
-    print("トークンを取り消す")
     revoke_token(access_token)
     # セッションを削除
-    print("セッションを削除")
     await session_backend.delete(session_id)
     #CookieからセッションIDを削除 
-    print("CookieからセッションIDを削除")
     session_cookie.delete_from_response(response)
     # Cookieからアクセストークンを削除
-    print("Cookieからアクセストークンを削除")
     response.delete_cookie("access_token")
+    # ログイン判定フラグを削除
+    response.delete_cookie("login")
     return {"message": "revoke token"}
-
-@app.get("/api/content", dependencies=[Depends(session_cookie)])
-def api_content(
-   session_data: SessionData = Depends(authorize)
-):
-    return session_data.id_token_payload
 
 #############################################
 # Debug API

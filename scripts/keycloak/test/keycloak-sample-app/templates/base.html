@@ -30,7 +30,7 @@
             id="logout_btn"
             type="button"
             class="btn btn-secondary"
-            onclick="logout()">
+            onclick="AuthUtil.logout()">
             <i class="bi bi-box-arrow-right"></i>
             Logout
           </button>
@@ -48,21 +48,11 @@
     </div>
   </div>
   <script>
-    async function logout() {
-      let res = await fetch("/api/revoke", { method: "POST" })
-      if (!res.ok) {
-        let msg = `${res.status} ${res.statusText}: ${await res.text()}`
-        alert(msg)
-      }
-      location.href = '/login'
-    }
-    /*
     if (AuthUtil.isAuthenticated()) {
       document.getElementById('logout_btn').style.display = 'block'
     } else {
       document.getElementById('logout_btn').style.display = 'none'
     }
-      */
   </script>
 </body>
 </html>

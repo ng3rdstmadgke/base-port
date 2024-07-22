@@ -4,13 +4,39 @@
 <div>
 <div id="app">
   <div class="mb-5">
+    <h2>Userinfo</h2>
+    <table class="table table-bordered">
+      <tr>
+        <th width="250px">Key</th>
+        <th>Value</th>
+      </tr>
+      <tr v-for="(value, key) in userinfo" :key="key">
+        <td>[[ key ]]</td>
+        <td><code>[[ value ]]</code></td>
+      </tr>
+    </table>
+  </div>
+  <div class="mb-5">
     <h2>ID Token Payload</h2>
     <table class="table table-bordered">
       <tr>
         <th width="250px">Key</th>
         <th>Value</th>
       </tr>
-      <tr v-for="(value, key) in content" :key="key">
+      <tr v-for="(value, key) in session_data.id_token_payload" :key="key">
+        <td>[[ key ]]</td>
+        <td><code>[[ value ]]</code></td>
+      </tr>
+    </table>
+  </div>
+  <div class="mb-5">
+    <h2>Token Response</h2>
+    <table class="table table-bordered">
+      <tr>
+        <th width="250px">Key</th>
+        <th>Value</th>
+      </tr>
+      <tr v-for="(value, key) in session_data.token_response" :key="key">
         <td>[[ key ]]</td>
         <td><code>[[ value ]]</code></td>
       </tr>
@@ -24,20 +50,30 @@ const { createApp, ref, onMounted } = Vue
 const app = createApp({
   // Composition API: setup(): https://ja.vuejs.org/api/composition-api-setup
   setup() {
-    const content = ref({})
+    const session_data = ref({})
+    const userinfo = ref({})
 
     onMounted(async () => {
-      let res = await fetch("/api/content", { method: "GET" })
+      let userinfoResponse = await fetch("/api/userinfo", { method: "GET" })
+      if (!userinfoResponse.ok) {
+        let msg = `${userinfoResponse.status} ${userinfoResponse.statusText}: ${await userinfoResponse.text()}`
+        alert(msg)
+        location.href = "/login"
+      }
+      userinfo.value = await userinfoResponse.json()
+
+      let res = await fetch("/api/session_data", { method: "GET" })
       if (!res.ok) {
         let msg = `${res.status} ${res.statusText}: ${await res.text()}`
         alert(msg)
         location.href = "/login"
       }
-      content.value = await res.json()
+      session_data.value = await res.json()
     })
     
     return {
-       content
+       session_data,
+       userinfo
     }
   },
   async mounted() {
