@@ -40,6 +40,13 @@ eksctl create iamidentitymapping \
 kubectl describe -n kube-system configmap/aws-auth
 ```
 
+## ノードグループの作成
+
+```bash
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/node/prd init
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/node/prd plan
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/node/prd apply -auto-approve
+```
 
 ## Helmチャートのインストール
 
