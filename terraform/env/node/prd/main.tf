@@ -46,6 +46,6 @@ module node_group_1 {
   key_pair_name = var.key_pair_name
   allow_ssh_source_sg_ids = var.allow_ssh_source_sg_ids
   // スポット料金: https://aws.amazon.com/jp/ec2/spot/pricing/
-  instance_types = ["m6a.large", "m6a.xlarge", "c6a.xlarge"]
+  instance_types = ["t3a.xlarge"]
   desired_size = 1
 }

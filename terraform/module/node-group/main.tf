@@ -1,3 +1,7 @@
+/**
+ * EKSノードグループ
+ * https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group
+ */
 resource "aws_eks_node_group" "this" {
   cluster_name    = local.cluster_name
   version         = data.aws_eks_cluster.this.version
