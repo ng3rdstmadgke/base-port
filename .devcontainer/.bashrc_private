@@ -20,3 +20,5 @@ source <(helm completion bash)
 source <(argocd completion bash)
 source <(kustomize completion bash)
 source <(poetry completions bash)
+
+alias k=kubectl

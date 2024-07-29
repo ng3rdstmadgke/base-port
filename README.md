@@ -56,6 +56,14 @@ terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd plan
 terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd apply -auto-approve
 ```
 
+## DBの作成
+
+```bash
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/database/prd init
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/database/prd plan
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/database/prd apply -auto-approve
+```
+
 ## セットアップスクリプトの実行
 
 ```bash
