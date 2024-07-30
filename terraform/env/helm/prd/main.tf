@@ -64,6 +64,14 @@ output "ingress_prd_sg" {
   value = module.albc.ingress_prd_sg
 }
 
+output "tools_ecr" {
+  value = module.tools.ecr
+}
+
+output "tools_role" {
+  value = module.tools.role
+}
+
 
 // Data Source: aws_eks_cluster
 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster
@@ -145,6 +153,13 @@ module efs_csi_driver {
 
 module secret_store_csi_driver {
   source = "../../../module/secret-store-csi-driver"
+  app_name = local.app_name
+  stage = local.stage
+  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+}
+
+module tools {
+  source = "../../../module/tools"
   app_name = local.app_name
   stage = local.stage
   eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
