@@ -38,13 +38,59 @@ locals {
   cluster_name = "${local.app_name}-${local.stage}"
 }
 
+/**
+ * ノードグループ用追加SG (あってもなくてもいい)
+ */
+// Data Source: aws_eks_cluster
+// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster
+data "aws_eks_cluster" "this" {
+  name = local.cluster_name
+}
+
+resource "aws_security_group" "additional_node_sg" {
+  name        = "${local.app_name}-${local.stage}-AdditionalNodeSecurityGroup"
+  description = "additional security group for ${local.app_name}-${local.stage}"
+  vpc_id      = data.aws_eks_cluster.this.vpc_config[0].vpc_id
+
+  ingress {
+    description = "Allow cluster SecurityGroup access."
+    from_port   = 0
+    to_port     = 0
+    protocol    = "all"
+    security_groups = [
+      data.aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
+    ]
+  }
+
+  ingress {
+    description = "Allow self access."
+    from_port   = 0
+    to_port     = 0
+    protocol    = "all"
+    self        = true
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "all"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = {
+    Name = "${local.app_name}-${local.stage}-AdditionalNodeSecurityGroup"
+
+  }
+}
+
 module node_group_1 {
   source = "../../../module/node-group"
   app_name = local.app_name
   stage = local.stage
   node_group_name = "ng-1"
   key_pair_name = var.key_pair_name
-  allow_ssh_source_sg_ids = var.allow_ssh_source_sg_ids
+  node_additional_sg = aws_security_group.additional_node_sg.id
   // スポット料金: https://aws.amazon.com/jp/ec2/spot/pricing/
   instance_types = ["t3a.xlarge"]
   desired_size = 1

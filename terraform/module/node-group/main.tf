@@ -79,7 +79,7 @@ resource "aws_launch_template" "node_instance" {
   key_name = var.key_pair_name
   vpc_security_group_ids = [
     data.aws_eks_cluster.this.vpc_config[0].cluster_security_group_id,
-    aws_security_group.additional_sg.id
+    var.node_additional_sg
   ]
 
   block_device_mappings {
@@ -102,33 +102,6 @@ resource "aws_launch_template" "node_instance" {
     }
   }
 }
-
-resource "aws_security_group" "additional_sg" {
-  name        = "${var.app_name}-${var.stage}-${var.node_group_name}-AdditionalSecurityGroup"
-  description = "additional security group for ${var.app_name}-${var.stage}-${var.node_group_name}"
-  vpc_id      = data.aws_eks_cluster.this.vpc_config[0].vpc_id
-
-  ingress {
-    description = "Allow SSH access."
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    security_groups = var.allow_ssh_source_sg_ids
-  }
-
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = ["::/0"]
-  }
-
-  tags = {
-    Name = "${var.app_name}-${var.stage}-${var.node_group_name}-AdditionalSecurityGroup"
-  }
-}
-
 
 /**
  * ノードのIAMロールの作成
@@ -199,5 +172,6 @@ resource "aws_iam_policy" "amazoneks_cni_ipv6_policy" {
 
 resource "aws_iam_role_policy_attachment" "amazoneks_cni_ipv6_policy" {
   role = aws_iam_role.eks_node_role.name
+ 
   policy_arn = aws_iam_policy.amazoneks_cni_ipv6_policy.arn
 }

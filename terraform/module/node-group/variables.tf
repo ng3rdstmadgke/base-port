@@ -2,10 +2,7 @@ variable app_name {}
 variable stage {}
 variable node_group_name {}
 variable key_pair_name {}
-variable allow_ssh_source_sg_ids {
-  type = list(string)
-  default = []  // default: allow 0.0.0.0/0
-}
+variable node_additional_sg {}
 
 variable instance_types {
   type = list(string)

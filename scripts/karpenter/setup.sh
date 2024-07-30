@@ -31,19 +31,30 @@ done
 #
 # Karpenterで利用するSecurity Groupにタグ付け
 #
-NODE_SECURITY_GROUP_IDS=$(
-  aws ec2 describe-instances \
-    --filters "Name=tag:eks:cluster-name,Values=${CLUSTER_NAME}" \
-    --query "Reservations[].Instances[].SecurityGroups[].[GroupId][]" \
-    --output text | tr '\t' '\n' | sort | uniq
-)
 
-for node_sg_id in $NODE_SECURITY_GROUP_IDS; do
-  echo "[node sg] $node_sg_id";
-  aws ec2 create-tags \
-    --resources $node_sg_id \
-    --tags "Key=karpenter.sh/discovery,Value=${CLUSTER_NAME}"
-done
+# クラスタセキュリティグループ
+CLUSTER_SECURITY_GROUP_ID=$(
+  aws eks describe-cluster \
+    --name $CLUSTER_NAME \
+    --query "cluster.resourcesVpcConfig.clusterSecurityGroupId" \
+    --output text
+)
+aws ec2 create-tags \
+  --resources $CLUSTER_SECURITY_GROUP_ID \
+  --tags "Key=karpenter.sh/discovery,Value=${CLUSTER_NAME}"
+
+# 追加のノードセキュリティグループ
+NODE_ADDITIONAL_SECURITY_GROUP_NAME="${CLUSTER_NAME}-AdditionalNodeSecurityGroup"
+NODE_ADDITIONAL_SECURITY_GROUP_ID=$(
+  aws ec2 describe-security-groups \
+    --filters "Name=tag:Name,Values=$NODE_ADDITIONAL_SECURITY_GROUP_NAME" \
+    --query "SecurityGroups[].GroupId" \
+    --output text
+)
+aws ec2 create-tags \
+  --resources ${NODE_ADDITIONAL_SECURITY_GROUP_ID} \
+  --tags "Key=karpenter.sh/discovery,Value=${CLUSTER_NAME}"
+
 
 mkdir -p $SCRIPT_DIR/tmp
 
