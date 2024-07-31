@@ -39,6 +39,7 @@ spec:
         - key: kc_db_password
           objectName: alias_db_password
   parameters:
+    # jmesPathを利用する場合JSONの値はString型である必要がある
     objects: |
         - objectName: "/baseport/prd/db"
           objectType: "secretsmanager"
@@ -114,7 +115,7 @@ spec:
       containers:
         - name: keycloak
           image: quay.io/keycloak/keycloak:25.0.1
-          args: ["start-dev"]
+          args: ["start"]  # プロダクションモードで起動
           env:
             # All Configuration | Keycloak: https://www.keycloak.org/server/all-config
             - name: KC_PROXY_HEADERS  # リバースプロキシを利用する場合の設定: https://www.keycloak.org/server/reverseproxy
@@ -153,6 +154,10 @@ spec:
                 secretKeyRef:
                   name: keycloak-db-secret
                   key: kc_db_password
+            - name: KC_HOSTNAME  # サーバーが公開されているホスト名
+              value: "keycloak.dev.baseport.net"
+            - name: KC_HTTP_ENABLED  # プロダクションモードではHTTPが無効になるので、明示的にHTTPを有効にする
+              value: "true"
           ports:
             - name: http
               containerPort: 8080
