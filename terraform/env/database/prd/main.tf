@@ -173,6 +173,6 @@ resource "aws_secretsmanager_secret_version" "app_db_secret_version" {
     db_user = local.user_name
     db_password = random_password.db_password.result
     db_host = aws_db_instance.app_db.address
-    db_port = aws_db_instance.app_db.port
+    db_port = tostring(aws_db_instance.app_db.port)
   })
 }
