@@ -155,7 +155,7 @@ spec:
                   name: keycloak-db-secret
                   key: kc_db_password
             - name: KC_HOSTNAME  # サーバーが公開されているホスト名
-              value: "keycloak.dev.baseport.net"
+              value: "keycloak.prd.baseport.net"
             - name: KC_HTTP_ENABLED  # プロダクションモードではHTTPが無効になるので、明示的にHTTPを有効にする
               value: "true"
           ports:
@@ -196,20 +196,20 @@ metadata:
   # Ingress annotations - AWS Load Balancer Controller
   # https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/guide/ingress/annotations/
   annotations:
-    alb.ingress.kubernetes.io/group.name: baseport-dev
+    alb.ingress.kubernetes.io/group.name: baseport-prd
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/tags: "PROJECT=BASEPORT_PRD"
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
     alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-1:674582907715:certificate/e30f56be-c73d-4068-8ee7-3661d50f7447
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-1:674582907715:certificate/014a4206-443a-4780-8f22-06f491c57f03
     alb.ingress.kubernetes.io/security-groups: baseport-prd-IngressDev
     alb.ingress.kubernetes.io/manage-backend-security-group-rules: "true"
     alb.ingress.kubernetes.io/healthcheck-path: /realms/master
 spec:
   ingressClassName: alb
   rules:
-    - host: keycloak.dev.baseport.net
+    - host: keycloak.prd.baseport.net
       http:
         paths:
           - path: /
