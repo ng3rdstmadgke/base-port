@@ -27,7 +27,7 @@ def get_token(code: str, env: Environment = get_env()) -> TokenEndpointResponse:
         "code": code,
         "client_id": env.client_id,
         "client_secret": env.client_secret,
-        "redirect_uri": "http://localhost:8000/code",
+        "redirect_uri": env.redirect_uri,
         "grant_type": "authorization_code",
     }
     response = requests.post(

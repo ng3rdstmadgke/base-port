@@ -6,6 +6,7 @@ class Environment (BaseSettings):
     client_secret: str
     authorization_server: str
     realm: str
+    redirect_uri: str
 
     pass
 
