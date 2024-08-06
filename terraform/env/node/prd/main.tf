@@ -80,6 +80,8 @@ resource "aws_security_group" "additional_node_sg" {
 
   tags = {
     Name = "${local.app_name}-${local.stage}-AdditionalNodeSecurityGroup"
+    // karpenterでもSGを使いたいので、karpenterのDiscovery用にタグを追加
+    "karpenter.sh/discovery" = local.cluster_name 
 
   }
 }
