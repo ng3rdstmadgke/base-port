@@ -1,0 +1,162 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: oauth2-proxy-sample
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upstream
+  namespace: oauth2-proxy-sample
+spec:
+  selector:
+    matchLabels:
+      app: upstream
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: upstream
+    spec:
+      containers:
+      - name: upstream
+        image: kennethreitz/httpbin:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: upstream-svc
+  namespace: oauth2-proxy-sample
+spec:
+  type: ClusterIP
+  selector:
+    app: upstream
+  ports:
+  - protocol: TCP
+    port: 8889
+    targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth2-proxy
+  namespace: oauth2-proxy-sample
+spec:
+  selector:
+    matchLabels:
+      app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        app: oauth2-proxy
+    spec:
+      containers:
+      - name: oauth2-proxy
+        image: quay.io/oauth2-proxy/oauth2-proxy:v7.6.0-amd64
+        ports:
+        - containerPort: 4180
+        env:
+        # オプション一覧: https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview#command-line-options
+        # OpenID Connect プロバイダ
+        - name: OAUTH2_PROXY_PROVIDER
+          value: "oidc"
+        # クライアントID
+        - name: OAUTH2_PROXY_CLIENT_ID
+          value: "oauth2-proxy-app"
+        # クライアントシークレット
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          value: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        # リダイレクトURL
+        - name: OAUTH2_PROXY_REDIRECT_URL
+          value: "https://oauth2-proxy-sample.dev.baseport.net/oauth2/callback"
+        # OpenID Connect プロバイダの識別子として機能するURL
+        # このURLから確認: https://keycloak.prd.baseport.net/realms/demo/.well-known/openid-configuration
+        - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+          value: "https://keycloak.prd.baseport.net/realms/demo"
+        # Generating a Cookie Secret : https://oauth2-proxy.github.io/oauth2-proxy/configuration/overview#generating-a-cookie-secret
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          value: "uXbnOCsKCg_jXC_mnFo5gVBxGrBBdAWz3VGXspQf5tU="
+        # CookieのSecure属性を無効化
+        - name: OAUTH2_PROXY_COOKIE_SECURE
+          value: "true"
+        # Cookieのsamesite属性にstrictを設定(CSRF対策)
+        - name: OAUTH2_PROXY_COOKIE_SAMESITE
+          value: "strict"
+        # 指定されたドメインのメールを認証する
+        - name: OAUTH2_PROXY_EMAIL_DOMAINS
+          value: "*"
+        # リッスンホストとポート
+        - name: OAUTH2_PROXY_HTTP_ADDRESS
+          value: "0.0.0.0:4180"
+        # 認証後にプロキシするURL
+        - name: OAUTH2_PROXY_UPSTREAMS
+          value: "http://upstream-svc.oauth2-proxy-sample:8889"
+        # Authorization BearerヘッダでIDトークンを upstream に渡す
+        - name: OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER
+          value: "true"
+        resources:
+          limits:
+            memory: 128Mi
+            cpu: 200m  # 1000m = 1 core
+          requests:
+            memory: 128Mi
+            cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth2-proxy-svc
+  namespace: oauth2-proxy-sample
+spec:
+  type: ClusterIP
+  selector:
+    app: oauth2-proxy
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 4180
+---
+# Ingress | Kubernetes API Reference:
+# https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#ingress-v1-networking-k8s-io
+# Ingress | AWS Load Balancer Controller:
+# https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-test-alb
+  namespace: oauth2-proxy-sample
+  # Ingress annotations - AWS Load Balancer Controller
+  # https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.4/guide/ingress/annotations/
+  annotations:
+    alb.ingress.kubernetes.io/group.name: baseport-dev
+    # 外部ALB (internet-facing | internal)
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    # Podへのトラフィックのルーティング方法を指定 
+    # - instance (default): ALBからのトラフィックはNodePortを経由してPodに到達する
+    # - ip: ALBからのトラフィックをClusterIPを利用して直接Podにルーティングする (EKS Fargateの場合は ip でなければならない)
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/tags: "PROJECT=BASEPORT_PRD"
+    # リスナーのポートにhttp:80とhttps:443を指定
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    # すべてのHTTPリスナーをHTTPSにリダイレクトさせる設定
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    # *.dev.baseport.net の証明書
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-1:674582907715:certificate/e30f56be-c73d-4068-8ee7-3661d50f7447
+    alb.ingress.kubernetes.io/inbound-cidrs: 0.0.0.0/0
+spec:
+  ingressClassName: alb
+  rules:
+    - host: oauth2-proxy-sample.dev.baseport.net
+      http:
+        paths:
+          - path: /
+            backend:
+              service:
+                name: oauth2-proxy-svc
+                port:
+                  number: 80
+            pathType: Prefix

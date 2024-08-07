@@ -1,5 +1,11 @@
 #!/bin/bash
 
+NAMESPACE=$1
+if [ -z "${NAMESPACE}" ]; then
+  echo "Usage: $0 <namespace>"
+  exit 1
+fi
+
 REMOTE_IMAGE="$(terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd output -raw tools_ecr)"
 ROLE_ARN="$(terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd output -raw tools_role)"
 
@@ -10,6 +16,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: tools
+  namespace: ${NAMESPACE}
   annotations:
     eks.amazonaws.com/role-arn: ${ROLE_ARN}
 
@@ -18,6 +25,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: tools
+  namespace: ${NAMESPACE}
   labels:
     app: tools
 spec:
@@ -29,5 +37,5 @@ spec:
 EOF
 
 kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/tools/tmp/app.yaml
-kubectl wait --for=condition=Ready pod/tools
-kubectl exec -it tools -- /bin/bash
+kubectl wait --for=condition=Ready -n ${NAMESPACE} pod/tools
+kubectl exec -it -n ${NAMESPACE} tools -- /bin/bash
