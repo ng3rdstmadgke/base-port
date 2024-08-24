@@ -12,7 +12,7 @@ terraform {
     // AWS Provider: https://registry.terraform.io/providers/hashicorp/aws/latest/docs
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.55.0"
+      version = "~> 5.64.0"
     }
   }
 }
@@ -25,36 +25,6 @@ provider "aws" {
     }
   }
 }
-
-output "vpc_id" {
-  value = module.eks.vpc.vpc_id
-}
-
-output "eks_cluster_sg_id" {
-  value = module.eks.cluster.cluster_security_group_id
-}
-
-output "eks_node_sg_id" {
-  value = module.eks.cluster.node_security_group_id
-}
-
-output "efs_id" {
-  value = module.efs.efs_id
-}
-
-output "private_subnets" {
-  value = module.eks.vpc.private_subnets
-}
-
-output "public_subnets" {
-  value = module.eks.vpc.public_subnets
-}
-
-locals {
-  app_name = "baseport"
-  stage = "prd"
-}
-
 
 module eks {
   source = "../../../module/eks"
@@ -73,20 +43,86 @@ module eks {
     "10.32.103.0/24"
   ]
   cluster_version = "1.30"
+  access_entries = var.access_entries
 }
 
-module test-fargate-profile {
-  source = "../../../module/fargate-profile"
-  profile_name = "test"
-  cluster_name = module.eks.cluster.cluster_name
-  private_subnets = module.eks.vpc.private_subnets
-  eks_fargate_pod_execution_role_arn = module.eks.eks_fargate_pod_execution_role_arn
-  selectors = [
-    {
-      namespace = "fargate-test"
-    }
-  ]
+/**
+ * Fargateプロファイル
+ */
+#module test-fargate-profile {
+#  source = "../../../module/fargate-profile"
+#  profile_name = "test"
+#  cluster_name = module.eks.cluster.cluster_name
+#  private_subnets = module.eks.vpc.private_subnets
+#  eks_fargate_pod_execution_role_arn = module.eks.eks_fargate_pod_execution_role_arn
+#  selectors = [
+#    {
+#      namespace = "fargate-test"
+#    }
+#  ]
+#}
+
+/**
+ * ノードグループ
+ */
+#module default_node_group {
+#  source = "../../../module/node-group"
+#  app_name = local.app_name
+#  stage = local.stage
+#  node_group_name = "ng-default"
+#  key_pair_name = var.key_pair_name
+#  // スポット料金: https://aws.amazon.com/jp/ec2/spot/pricing/
+#  instance_types = ["t3a.xlarge"]
+#  desired_size = 1
+#
+#  depends_on = [
+#    module.eks
+#   ]
+#}
+
+/**
+ * アドオン
+ *
+ * aws_eks_addon | Terraform
+ * https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon
+ */
+resource "aws_eks_addon" "coredns" {
+  cluster_name  = module.eks.cluster.cluster_name
+  addon_name    = "coredns"
+  addon_version = "v1.11.1-eksbuild.8"
+  #depends_on = [
+  #  module.default_node_group
+  #]
 }
+
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name  = module.eks.cluster.cluster_name
+  addon_name   = "kube-proxy"
+  addon_version = "v1.30.0-eksbuild.3"
+  #depends_on = [
+  #  module.default_node_group
+  #]
+}
+
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name  = module.eks.cluster.cluster_name
+  addon_name   = "vpc-cni"
+  addon_version = "v1.18.3-eksbuild.2"
+  #depends_on = [
+  #  module.default_node_group
+  #]
+}
+
+resource "aws_eks_addon" "eks_pod_identity_agent" {
+  cluster_name  = module.eks.cluster.cluster_name
+  addon_name   = "eks-pod-identity-agent"
+  addon_version = "v1.3.0-eksbuild.1"
+  #depends_on = [
+  #  module.default_node_group
+  #]
+}
+
+
 
 module efs {
   source = "../../../module/efs"
@@ -94,46 +130,5 @@ module efs {
   stage = local.stage
   vpc_id = module.eks.vpc.vpc_id
   private_subnets = module.eks.vpc.private_subnets
-  eks_cluster_sg_id = module.eks.cluster.cluster_security_group_id
+  eks_cluster_sg_id = module.eks.cluster.cluster_primary_security_group_id
 }
-
-/**
- * https://github.com/terraform-aws-modules/terraform-aws-eks/tree/v20.14.0/modules/eks-managed-node-group
- */
-/*
-module "group01" {
-  source = "terraform-aws-modules/eks/aws//modules/eks-managed-node-group"
-  name            = "${local.app_name}-${local.stage}-group-01"
-  cluster_name    = module.eks.cluster.cluster_name
-  cluster_version = module.eks.cluster.cluster_version
-
-  subnet_ids = module.eks.vpc.private_subnets
-
-  // eksモジュールの外でこのモジュールを利用する場合、以下の変数を指定する必要があります
-  // これらを指定しないと、ノードのセキュリティグループが空になり、クラスタに参加できません
-  cluster_primary_security_group_id = module.eks.cluster.cluster_primary_security_group_id
-  vpc_security_group_ids            = [module.eks.cluster.node_security_group_id]
-
-  // Note: `disk_size`, と `remote_access` は デフォルトlaunch templateを利用する場合のみ指定可能
-  // このモジュールでは、セキュリティグループ、タグの伝播などをカスタマイズするために、デフォルトでカスタムlaunch templateを提供するようになっています
-  // use_custom_launch_template = false
-  // disk_size = 50
-  //
-  //  # Remote access cannot be specified with a launch template
-  //  remote_access = {
-  //    ec2_ssh_key               = module.key_pair.key_pair_name
-  //    source_security_group_ids = [aws_security_group.remote_access.id]
-  //  }
-
-  min_size     = 1
-  max_size     = 10
-  desired_size = 1
-
-  instance_types = ["t3.medium"]
-  capacity_type  = "SPOT"
-
-  //labels = {
-  //  "nodegroup-type" = "some"
-  //}
-}
-*/

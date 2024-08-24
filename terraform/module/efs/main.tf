@@ -10,6 +10,7 @@
 resource "aws_efs_file_system" "this" {
   creation_token = "${var.app_name}-${var.stage}"
   encrypted = true
+  throughput_mode = "elastic"
 
   tags = {
     Name = "${var.app_name}-${var.stage}"
@@ -26,9 +27,6 @@ resource "aws_efs_mount_target" "alpha" {
   ]
 }
 
-/**
- * ALB のセキュリティグループ
- */
 resource "aws_security_group" "efs" {
   name        = "${var.app_name}-${var.stage}-efsMountTarget"
   description = "Allow EKS Cluster SG access."

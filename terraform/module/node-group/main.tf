@@ -82,10 +82,9 @@ resource "aws_launch_template" "node_instance" {
   // image_id = nonsensitive(aws_ssm_parameter.eks_ami_release_version.value)
 
   key_name = var.key_pair_name
-  vpc_security_group_ids = [
+  vpc_security_group_ids = concat([
     data.aws_eks_cluster.this.vpc_config[0].cluster_security_group_id,
-    var.node_additional_sg
-  ]
+  ], var.node_additional_sg_ids)
 
   block_device_mappings {
     device_name = "/dev/xvda"

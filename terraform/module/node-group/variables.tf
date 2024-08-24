@@ -2,7 +2,11 @@ variable app_name {}
 variable stage {}
 variable node_group_name {}
 variable key_pair_name {}
-variable node_additional_sg {}
+
+variable node_additional_sg_ids {
+  type = list(string)
+  default = []
+}
 
 variable instance_types {
   type = list(string)

@@ -1,8 +1,43 @@
-// terraform-aws-modules/eks/aws: https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest
-// fargate_profile example: https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v20.14.0/examples/fargate_profile/main.tf
+/**
+ * VPC
+ * terraform-aws-modules/vpc/aws
+ *   - https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest
+ * terraform-aws-eks example fargate_profile
+ *   - https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v20.14.0/examples/fargate_profile/main.tf#L120
+ */
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.8.1"
+
+  name = "${var.app_name}-${var.stage}-vpc"
+  cidr = "10.32.0.0/16"
+
+  azs             = ["ap-northeast-1a", "ap-northeast-1c", "ap-northeast-1d"]
+  private_subnets = var.private_subnets
+  public_subnets  = var.public_subnets
+
+  enable_nat_gateway = true
+  single_nat_gateway = true
+  enable_vpn_gateway = false
+
+  // パブリックサブネットを外部LB用に利用することをKubernetesとALBが認識できるようにするためのタグ
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = "1"
+  }
+  // プライベートネットを内部LB用に利用することをKubernetesとALBが認識できるようにするためのタグ
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = "1"
+  }
+}
+
+/**
+ * EKSクラスタ
+ *   terraform-aws-modules/eks/aws: https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest
+ *   fargate_profile example: https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v20.14.0/examples/fargate_profile/main.tf
+ */
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.14.0"
+  version = "~> 20.24.0"
 
   cluster_name = local.cluster_name
   cluster_version = var.cluster_version
@@ -11,28 +46,6 @@ module "eks" {
   // NOTE: 「APIサーバーエンドポイント」「パブリックアクセス」とは？: https://dev.classmethod.jp/articles/eks-public-endpoint-access-restriction/#toc-1
   cluster_endpoint_public_access = true
 
-  cluster_addons = {
-    // クラスター内でサービス検出を有効にする
-    coredns = {
-      #most_recent = true
-      configuration_values = jsonencode({
-        computeType = "fargate"
-      })
-    }
-    // クラスター内でサービスネットワーキングを有効にする
-    kube-proxy = {
-      #most_recent = true
-    }
-    // クラスター内でポッドネットワーキングを有効にする
-    vpc-cni = {
-      #most_recent = true
-    }
-    // Kubernetes サービスアカウントを通じてポッドに AWS IAM アクセス許可を付与する
-    eks-pod-identity-agent = {
-      #most_recent = true
-    }
-  }
-
   vpc_id = module.vpc.vpc_id
 
   // ノード/ノードグループがプロビジョニングされるサブネット ID
@@ -40,31 +53,24 @@ module "eks" {
   // パブリックサブネットを含める場合: subnet_ids = concat(module.vpc.private_subnets, module.vpc.public_subnets)
   subnet_ids = module.vpc.private_subnets
 
-  // control_plane_subnet_ids = module.vpc.intra_subnets
-
   // IAM Roles for Service Accounts (IRSA) を有効にするためにEKS用のOpenID Connect Providerを作成するかどうか
   enable_irsa     = true
 
-  // クラスタ作成者(Terraformが使用するID)をアクセスエントリ経由で管理者として追加する
+  // TerraformをデプロイしたRoleにkubernetesAPIへのアクセス権を付与する (これがないとkubectlコマンドで操作できない)
   enable_cluster_creator_admin_permissions = true
 
   // クラスターに対するIAMプリンシパルアクセスの有効化: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/add-user-role.html
   authentication_mode = "API_AND_CONFIG_MAP"
 
-  // マネージド型ノードグループ: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/managed-node-groups.html
-  eks_managed_node_groups = {
-    default = {
-      min_size = 1
-      max_size = 5
-      desired_size   = 2
-      instance_types = ["t3.medium"]
-      capacity_type  = "SPOT"
-    }
-  }
+  # 追加のセキュリティグループを作成するかどうか
+  create_cluster_security_group = false
+  create_node_security_group    = false
 
-  # Fargate profiles use the cluster primary security group so these are not utilized
-  #create_cluster_security_group = false
-  #create_node_security_group    = false
+  #cluster_security_group_tags = {
+  #  #"aws:eks:cluster-name" = local.cluster_name
+  #  #"kubernetes.io/cluster/baseport-prd" = "owned"
+  #  "karpenter.sh/discovery" = local.cluster_name
+  #}
 
   /**
    * クラスタSG
@@ -72,7 +78,6 @@ module "eks" {
    * - クラスタSGは下記に適用される
    *   - EKSコントロールプレーン通信用ENI
    *   - マネージドノードグループ内のEC2ノード (ただし、ノードSGが付与されている場合は、クラスタSGは付与されない)
-   */
   cluster_security_group_additional_rules = {
     egress_nodes_ephemeral_ports_tcp = {
       description                = "To node 1025-65535"
@@ -83,13 +88,13 @@ module "eks" {
       source_node_security_group = true
     }
   }
+   */
 
   /**
    * ノードSG
    * - EKSのセキュリティグループについて理解する | Qiita: https://qiita.com/MAKOTO1995/items/4e70998e50aaea5e9882
    * - ノードSGは下記に適用される
    *   - マネージドノードグループ内のEC2ノードに付与するSG
-   */
   node_security_group_additional_rules = {
     admission_webhook = {
       description                   = "Admission Webhook"
@@ -118,6 +123,43 @@ module "eks" {
       ipv6_cidr_blocks = ["::/0"]
     }
   }
+   */
+}
+
+/**
+ * IAMユーザー・ロールにkubernetesAPIへのアクセス権限を付与
+ * - EKS アクセスエントリを使用して Kubernetes へのアクセスを IAM ユーザーに許可する | AWS
+ *   https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/access-entries.html
+ */
+// aws_eks_access_entry | Terraform
+// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_entry
+resource "aws_eks_access_entry" "admin" {
+  for_each = toset(var.access_entries)  // 配列はループできないのでセットに変換
+  cluster_name      = local.cluster_name
+  principal_arn     = each.key
+  type              = "STANDARD"
+
+  depends_on = [
+    module.eks
+  ]
+}
+
+// aws_eks_access_policy_association | Terraform
+// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_policy_association
+resource "aws_eks_access_policy_association" "admin" {
+  for_each = toset(var.access_entries)
+  cluster_name  = local.cluster_name
+  // アクセスポリシー: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/access-policies.html#access-policy-permissions
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = each.key
+
+  access_scope {
+    type       = "cluster"
+  }
+
+  depends_on = [
+    module.eks
+  ]
 }
 
 /**
@@ -134,106 +176,3 @@ module "eks" {
  *   - terraform-aws-eks の サブモジュール eks-managed-node-group のソースコード
  *     - https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v20.14.0/modules/eks-managed-node-group/main.tf#L470
  */
-
-/**
- * EKSのPod実行ロール
- * - terraform-aws-eks の サブモジュール fargate-profile のソースコード
- *   - https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v20.14.0/modules/fargate-profile/main.tf#L20
- */
-resource "aws_iam_role" "eks_fargate_pod_execution_role" {
-  name = "${var.app_name}-${var.stage}-EKSFargatePodExecutionRole"
-  assume_role_policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Condition": {
-          "ArnLike": {
-            "aws:SourceArn": "arn:aws:eks:${data.aws_region.self.name}:${data.aws_caller_identity.self.account_id}:fargateprofile/${local.cluster_name}/*"
-          }
-        },
-        "Principal": {
-          "Service": "eks-fargate-pods.amazonaws.com"
-        },
-        "Action": "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-// PodをFargateで実行するためのEKS Pod実行ロールポリシーをアタッチ
-//   - https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/pod-execution-role.html#create-pod-execution-role
-resource "aws_iam_role_policy_attachment" "eks_fargate_pod_execution_role_policy" {
-  role = aws_iam_role.eks_fargate_pod_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
-}
-
-// IRSAをIPv4利用するためのポリシーアタッチメント
-//   - https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/cni-iam-role.html#cni-iam-role-create-role
-resource "aws_iam_role_policy_attachment" "amazoneks_cni_policy" {
-  role = aws_iam_role.eks_fargate_pod_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-}
-
-// IRSAをIPv6利用するためのポリシーアタッチメント
-//   - https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/cni-iam-role.html#cni-iam-role-create-role
-// IPv6 を使用するクラスター用の IAM ポリシー
-//   - https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/cni-iam-role.html#cni-iam-role-create-ipv6-policy
-resource "aws_iam_policy" "amazoneks_cni_ipv6_policy" {
-  name = "${var.app_name}-${var.stage}-AmazonEKS_CNI_IPv6_Policy"
-  policy = jsonencode({
-    "Version": "2012-10-17",
-    "Statement": [
-      {
-        "Effect": "Allow",
-        "Action": [
-          "ec2:AssignIpv6Addresses",
-          "ec2:DescribeInstances",
-          "ec2:DescribeTags",
-          "ec2:DescribeNetworkInterfaces",
-          "ec2:DescribeInstanceTypes"
-        ],
-        "Resource": "*"
-      },
-      {
-        "Effect": "Allow",
-        "Action": [
-          "ec2:CreateTags"
-        ],
-        "Resource": [
-          "arn:aws:ec2:*:*:network-interface/*"
-        ]
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "amazoneks_cni_ipv6_policy" {
-  role = aws_iam_role.eks_fargate_pod_execution_role.name
-  policy_arn = aws_iam_policy.amazoneks_cni_ipv6_policy.arn
-}
-
-
-// 追加のIAMポリシーをアタッチ
-// terraform-aws-eks の fargate_profile example から引用
-//   - https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v20.14.0/examples/fargate_profile/main.tf#L146
-resource "aws_iam_policy" "additional" {
-  name = "${var.app_name}-${var.stage}-AdditionalPolicy"
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ec2:Describe*",
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "additional_policy" {
-  role = aws_iam_role.eks_fargate_pod_execution_role.name
-  policy_arn = aws_iam_policy.additional.arn
-}
