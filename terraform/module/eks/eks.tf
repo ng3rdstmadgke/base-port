@@ -62,68 +62,22 @@ module "eks" {
   // クラスターに対するIAMプリンシパルアクセスの有効化: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/add-user-role.html
   authentication_mode = "API_AND_CONFIG_MAP"
 
-  # 追加のセキュリティグループを作成するかどうか
-  create_cluster_security_group = false
-  create_node_security_group    = false
-
-  #cluster_security_group_tags = {
-  #  #"aws:eks:cluster-name" = local.cluster_name
-  #  #"kubernetes.io/cluster/baseport-prd" = "owned"
-  #  "karpenter.sh/discovery" = local.cluster_name
-  #}
-
   /**
-   * クラスタSG
+   * 追加のクラスタSGを作成するかどうか
    * - EKSのセキュリティグループについて理解する | Qiita: https://qiita.com/MAKOTO1995/items/4e70998e50aaea5e9882
    * - クラスタSGは下記に適用される
    *   - EKSコントロールプレーン通信用ENI
    *   - マネージドノードグループ内のEC2ノード (ただし、ノードSGが付与されている場合は、クラスタSGは付与されない)
-  cluster_security_group_additional_rules = {
-    egress_nodes_ephemeral_ports_tcp = {
-      description                = "To node 1025-65535"
-      protocol                   = "tcp"
-      from_port                  = 1025
-      to_port                    = 65535
-      type                       = "egress"
-      source_node_security_group = true
-    }
-  }
    */
+  create_cluster_security_group = false
 
   /**
-   * ノードSG
+   * 追加のノードSGを作成するかどうか
    * - EKSのセキュリティグループについて理解する | Qiita: https://qiita.com/MAKOTO1995/items/4e70998e50aaea5e9882
    * - ノードSGは下記に適用される
    *   - マネージドノードグループ内のEC2ノードに付与するSG
-  node_security_group_additional_rules = {
-    admission_webhook = {
-      description                   = "Admission Webhook"
-      protocol                      = "tcp"
-      from_port                     = 0
-      to_port                       = 65535
-      type                          = "ingress"
-      source_cluster_security_group = true
-    }
-
-    ingress_self_all = {
-      description = "Node to node all ports/protocols"
-      protocol    = "-1"
-      from_port   = 0
-      to_port     = 0
-      type        = "ingress"
-      self        = true
-    }
-    egress_all = {
-      description      = "Node all egress"
-      protocol         = "-1"
-      from_port        = 0
-      to_port          = 0
-      type             = "egress"
-      cidr_blocks      = ["0.0.0.0/0"]
-      ipv6_cidr_blocks = ["::/0"]
-    }
-  }
    */
+  create_node_security_group    = false
 }
 
 /**
@@ -131,8 +85,7 @@ module "eks" {
  * - EKS アクセスエントリを使用して Kubernetes へのアクセスを IAM ユーザーに許可する | AWS
  *   https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/access-entries.html
  */
-// aws_eks_access_entry | Terraform
-// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_entry
+// aws_eks_access_entry: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_entry
 resource "aws_eks_access_entry" "admin" {
   for_each = toset(var.access_entries)  // 配列はループできないのでセットに変換
   cluster_name      = local.cluster_name
@@ -144,8 +97,7 @@ resource "aws_eks_access_entry" "admin" {
   ]
 }
 
-// aws_eks_access_policy_association | Terraform
-// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_policy_association
+// aws_eks_access_policy_association: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_access_policy_association
 resource "aws_eks_access_policy_association" "admin" {
   for_each = toset(var.access_entries)
   cluster_name  = local.cluster_name
@@ -167,12 +119,4 @@ resource "aws_eks_access_policy_association" "admin" {
  *   - https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/service_IAM_role.html#create-service-role
  *   - terraform-aws-eks の ソースコード
  *     - https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v20.14.0/main.tf#L357
- */
-
-/**
- * TODO: ノードのIAMロールの作成
- *   - managed_node_group で使用する IAM ロールを作成します。
- *     - https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/create-node-role.html#create-worker-node-role
- *   - terraform-aws-eks の サブモジュール eks-managed-node-group のソースコード
- *     - https://github.com/terraform-aws-modules/terraform-aws-eks/blob/v20.14.0/modules/eks-managed-node-group/main.tf#L470
  */
