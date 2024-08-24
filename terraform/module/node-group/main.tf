@@ -1,4 +1,25 @@
 /**
+ * ノードグループ用追加SG
+ */
+resource "aws_security_group" "additional_node_sg" {
+  name        = "${var.app_name}-${var.stage}-${var.node_group_name}-AdditionalNodeSecurityGroup"
+  description = "additional security group for ${var.node_group_name} node group."
+  vpc_id      = data.aws_eks_cluster.this.vpc_config[0].vpc_id
+
+  ingress {
+    description = "Allow cluster SecurityGroup access."
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks      = ["10.0.0.0/8"]
+  }
+
+  tags = {
+    Name = "${var.app_name}-${var.stage}-${var.node_group_name}-AdditionalNodeSecurityGroup"
+  }
+}
+
+/**
  * 起動テンプレート
  * https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template
  */
@@ -11,7 +32,10 @@ resource "aws_launch_template" "node_instance" {
   key_name = var.key_pair_name
   vpc_security_group_ids = concat([
     data.aws_eks_cluster.this.vpc_config[0].cluster_security_group_id,
+    aws_security_group.additional_node_sg.id
   ], var.node_additional_sg_ids)
+
+  update_default_version = true
 
   block_device_mappings {
     device_name = "/dev/xvda"
@@ -58,7 +82,6 @@ resource "aws_launch_template" "node_instance" {
 // data "aws_ssm_parameter" "eks_ami_release_version" {
 //   name = "/aws/service/eks/optimized-ami/${data.aws_eks_cluster.this.version}/${local.ami_type}/recommended/release_version"
 // }
-
 
 
 /**

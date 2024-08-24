@@ -92,7 +92,8 @@ module node_group_1 {
   stage = local.stage
   node_group_name = "ng-1"
   key_pair_name = var.key_pair_name
-  node_additional_sg = aws_security_group.additional_node_sg.id
+  node_role_arn = "arn:aws:iam::674582907715:role/baseport-prd-EKSNodeRole"
+  node_additional_sg_ids = [aws_security_group.additional_node_sg.id]
   // スポット料金: https://aws.amazon.com/jp/ec2/spot/pricing/
   instance_types = ["t3a.xlarge"]
   desired_size = 1
