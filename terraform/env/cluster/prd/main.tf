@@ -47,6 +47,82 @@ module eks {
 }
 
 /**
+ * ノードグループ
+ */
+module default_node_group {
+  source = "../../../module/node-group"
+  app_name = local.app_name
+  stage = local.stage
+  node_group_name = "ng-default"
+  key_pair_name = var.key_pair_name
+  node_role_arn = module.eks.node_role_arn
+  // スポット料金: https://aws.amazon.com/jp/ec2/spot/pricing/
+  instance_types = ["t3a.xlarge"]
+  desired_size = 1
+
+  depends_on = [
+    module.eks
+  ]
+}
+
+/**
+ * アドオン
+ *
+ * aws_eks_addon | Terraform
+ * https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon
+ */
+resource "aws_eks_addon" "coredns" {
+  cluster_name  = module.eks.cluster.cluster_name
+  addon_name    = "coredns"
+  addon_version = "v1.11.1-eksbuild.8"
+  #configuration_values = jsonencode({
+  #  computeType = "fargate"
+  #})
+  depends_on = [
+    module.default_node_group
+  ]
+}
+
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name  = module.eks.cluster.cluster_name
+  addon_name   = "kube-proxy"
+  addon_version = "v1.30.0-eksbuild.3"
+  depends_on = [
+    module.default_node_group
+  ]
+}
+
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name  = module.eks.cluster.cluster_name
+  addon_name   = "vpc-cni"
+  addon_version = "v1.18.3-eksbuild.2"
+  depends_on = [
+    module.default_node_group
+  ]
+}
+
+resource "aws_eks_addon" "eks_pod_identity_agent" {
+  cluster_name  = module.eks.cluster.cluster_name
+  addon_name   = "eks-pod-identity-agent"
+  addon_version = "v1.3.0-eksbuild.1"
+  depends_on = [
+    module.default_node_group
+  ]
+}
+
+
+
+module efs {
+  source = "../../../module/efs"
+  app_name = local.app_name
+  stage = local.stage
+  vpc_id = module.eks.vpc.vpc_id
+  private_subnets = module.eks.vpc.private_subnets
+  eks_cluster_sg_id = module.eks.cluster.cluster_primary_security_group_id
+}
+
+
+/**
  * Fargateプロファイル
  */
 #module test-fargate-profile {
@@ -61,74 +137,3 @@ module eks {
 #    }
 #  ]
 #}
-
-/**
- * ノードグループ
- */
-#module default_node_group {
-#  source = "../../../module/node-group"
-#  app_name = local.app_name
-#  stage = local.stage
-#  node_group_name = "ng-default"
-#  key_pair_name = var.key_pair_name
-#  // スポット料金: https://aws.amazon.com/jp/ec2/spot/pricing/
-#  instance_types = ["t3a.xlarge"]
-#  desired_size = 1
-#
-#  depends_on = [
-#    module.eks
-#   ]
-#}
-
-/**
- * アドオン
- *
- * aws_eks_addon | Terraform
- * https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_addon
- */
-resource "aws_eks_addon" "coredns" {
-  cluster_name  = module.eks.cluster.cluster_name
-  addon_name    = "coredns"
-  addon_version = "v1.11.1-eksbuild.8"
-  #depends_on = [
-  #  module.default_node_group
-  #]
-}
-
-resource "aws_eks_addon" "kube_proxy" {
-  cluster_name  = module.eks.cluster.cluster_name
-  addon_name   = "kube-proxy"
-  addon_version = "v1.30.0-eksbuild.3"
-  #depends_on = [
-  #  module.default_node_group
-  #]
-}
-
-resource "aws_eks_addon" "vpc_cni" {
-  cluster_name  = module.eks.cluster.cluster_name
-  addon_name   = "vpc-cni"
-  addon_version = "v1.18.3-eksbuild.2"
-  #depends_on = [
-  #  module.default_node_group
-  #]
-}
-
-resource "aws_eks_addon" "eks_pod_identity_agent" {
-  cluster_name  = module.eks.cluster.cluster_name
-  addon_name   = "eks-pod-identity-agent"
-  addon_version = "v1.3.0-eksbuild.1"
-  #depends_on = [
-  #  module.default_node_group
-  #]
-}
-
-
-
-module efs {
-  source = "../../../module/efs"
-  app_name = local.app_name
-  stage = local.stage
-  vpc_id = module.eks.vpc.vpc_id
-  private_subnets = module.eks.vpc.private_subnets
-  eks_cluster_sg_id = module.eks.cluster.cluster_primary_security_group_id
-}
