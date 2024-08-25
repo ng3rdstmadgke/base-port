@@ -20,5 +20,6 @@ source <(helm completion bash)
 source <(argocd completion bash)
 source <(kustomize completion bash)
 source <(poetry completions bash)
+complete -C '/usr/local/bin/aws_completer' aws
 
 alias k=kubectl

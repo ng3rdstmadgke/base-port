@@ -8,9 +8,9 @@ EKS環境を構築するプロジェクト
 ## EKSクラスタ作成
 
 ```bash
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/cluster/prd init
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/cluster/prd plan
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/cluster/prd apply -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/cluster init
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/cluster plan
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/cluster apply -auto-approve
 ```
 
 `~/.kube/config` にクラスタを登録
@@ -43,33 +43,33 @@ kubectl describe -n kube-system configmap/aws-auth
 ## ノードグループの作成
 
 ```bash
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/node/prd init
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/node/prd plan
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/node/prd apply -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/node init
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/node plan
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/node apply -auto-approve
 ```
 
 ## Helmチャートのインストール
 
 ```bash
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd init
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd plan
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd apply -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/helm init
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/helm plan
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/helm apply -auto-approve
 ```
 
 ## DBの作成
 
 ```bash
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/database/prd init
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/database/prd plan
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/database/prd apply -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/database init
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/database plan
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/database apply -auto-approve
 ```
 
 ## サービスリソース作成
 
 ```bash
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/service/prd init
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/service/prd plan
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/service/prd apply -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/service init
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/service plan
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/service apply -auto-approve
 ```
 
 ## セットアップスクリプトの実行
@@ -83,6 +83,6 @@ terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/service/prd apply -auto
 # 削除
 
 ```bash
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd destroy -auto-approve
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/cluster/prd destroy -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/helm destroy -auto-approve
+terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/cluster destroy -auto-approve
 ```
