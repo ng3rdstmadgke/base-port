@@ -21,25 +21,19 @@ resource "aws_iam_role" "karpenter_node_role" {
   })
 }
 
-// Amazon VPC CNI プラグインが EKS ワーカーノードを構成するために必要な権限
-resource "aws_iam_role_policy_attachment" "amazoneks_cni_policy" {
+resource "aws_iam_role_policy_attachment" "karpenter_node_role_policy" {
+  for_each = toset([
+    // Amazon VPC CNI プラグインが EKS ワーカーノードを構成するために必要な権限
+    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+    // Amazon EKS ワーカーノードが EKS クラスターに接続できるようにする
+    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+    // Amazon EC2 コンテナレジストリ内のリポジトリへの読み取り専用アクセスを許可
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+    // Amazon EC2 用の AWS Systems Manager サービスコア機能
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  ])
   role = aws_iam_role.karpenter_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-}
-// Amazon EKS ワーカーノードが EKS クラスターに接続できるようにする
-resource "aws_iam_role_policy_attachment" "amazon_eks_worker_node_policy" {
-  role = aws_iam_role.karpenter_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-}
-// Amazon EC2 コンテナレジストリ内のリポジトリへの読み取り専用アクセスを許可
-resource "aws_iam_role_policy_attachment" "amazon_ec2_container_registry_read_only" {
-  role = aws_iam_role.karpenter_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
-// Amazon EC2 用の AWS Systems Manager サービスコア機能
-resource "aws_iam_role_policy_attachment" "amazon_ssm_managed_instance_core" {
-  role = aws_iam_role.karpenter_node_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  policy_arn = each.key
 }
 
 /**
@@ -67,16 +61,9 @@ resource "aws_iam_role" "karpenter_controller_role" {
   depends_on = [ aws_iam_policy.karpenter_controller_policy ]
 }
 
-resource "aws_iam_role_policy_attachment" "karpenter_controller_policy" {
-  role = aws_iam_role.karpenter_controller_role.name
-  policy_arn = aws_iam_policy.karpenter_controller_policy.arn
-}
-
-
 resource "aws_iam_policy" "karpenter_controller_policy" {
   name = "${var.app_name}-${var.stage}-KarpenterControllerPolicy"
-  policy = jsonencode(
-    {
+  policy = jsonencode({
       "Version": "2012-10-17",
       "Statement": [
         {
@@ -324,8 +311,12 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
           "Action": "eks:DescribeCluster"
         }
       ]
-    }
-  )
+    })
+}
+
+resource "aws_iam_role_policy_attachment" "karpenter_controller_policy" {
+  role = aws_iam_role.karpenter_controller_role.name
+  policy_arn = aws_iam_policy.karpenter_controller_policy.arn
 }
 
 /**
@@ -341,6 +332,10 @@ resource "kubernetes_service_account" "karpenter_controller_role" {
       "eks.amazonaws.com/role-arn" = aws_iam_role.karpenter_controller_role.arn
     }
   }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.karpenter_controller_policy
+  ]
 }
 
 /**
@@ -373,7 +368,9 @@ eksctl delete iamidentitymapping \
 EOT
     when        = destroy
   }
-  depends_on = [ aws_iam_role.karpenter_node_role ]
+  depends_on = [
+    aws_iam_role_policy_attachment.karpenter_node_role_policy
+  ]
 }
 
 /**
@@ -570,4 +567,30 @@ resource "helm_release" "karpenter" {
     aws_iam_role.karpenter_controller_role,
     aws_sqs_queue.karpenter_interruption_queue
   ]
+}
+
+/**
+ * karpenter管理ノードの追加セキュリティグループ
+ */
+data "aws_eks_cluster" "this" {
+  name = local.cluster_name
+}
+
+resource "aws_security_group" "additional_node_sg" {
+  name        = "${var.app_name}-${var.stage}-karpenter-AdditionalNodeSecurityGroup"
+  description = "additional security group for karpenter node."
+  vpc_id      = data.aws_eks_cluster.this.vpc_config[0].vpc_id
+
+  ingress {
+    description = "Allow cluster SecurityGroup access."
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks      = ["10.0.0.0/8"]
+  }
+
+  tags = {
+    "Name" = "${var.app_name}-${var.stage}-karpenter-AdditionalNodeSecurityGroup"
+    "karpenter.sh/discovery" = local.cluster_name
+  }
 }

@@ -14,7 +14,7 @@ terraform {
     // AWS Provider: https://registry.terraform.io/providers/hashicorp/aws/latest/docs
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.55.0"
+      version = "~> 5.64.0"
     }
     // Kubernetes Provider: https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs
     kubernetes = {
