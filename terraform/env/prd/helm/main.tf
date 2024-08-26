@@ -129,3 +129,7 @@ module tools {
   stage = local.stage
   eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
+
+module nvidia_device_plugin {
+  source = "../../../module/nvidia-device-plugin"
+}

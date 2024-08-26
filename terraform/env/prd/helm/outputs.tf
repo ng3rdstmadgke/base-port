@@ -1,5 +1,5 @@
-output karpenter_node_role_arn {
-  value = module.karpenter.karpenter_node_role_arn
+output karpenter_node_role_name {
+  value = module.karpenter.karpenter_node_role.name
 }
 
 output "keda_operator_role_arn" {
