@@ -50,18 +50,21 @@ fi
 #
 mkdir -p $SCRIPT_DIR/tmp
 CLUSTER_VERSION=$(terraform -chdir=${TERRAFORM_DIR}/cluster output -raw eks_cluster_version)
-KARPENTER_NODE_ROLE=$(terraform -chdir=${TERRAFORM_DIR}/helm output -raw karpenter_node_role_arn)
+KARPENTER_NODE_ROLE_NAME=$(terraform -chdir=${TERRAFORM_DIR}/helm output -raw karpenter_node_role_name)
 
+#
+# default の NodePools と NodeClasses の設定ファイルを作成
+#
 # NodeClasses | Karpenter: https://karpenter.sh/docs/concepts/nodeclasses/
-cat <<EOF > $SCRIPT_DIR/tmp/nodeclass.yaml
+cat <<EOF > $SCRIPT_DIR/tmp/nodeclass_default.yaml
 ---
 apiVersion: karpenter.k8s.aws/v1beta1
 kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  amiFamily: AL2023  # Amazon Linux 2023
-  role: "${KARPENTER_NODE_ROLE}" # replace with your cluster name
+  amiFamily: AL2 # AL2023  # Amazon Linux 2023
+  role: "${KARPENTER_NODE_ROLE_NAME}" # replace with your cluster name
   subnetSelectorTerms:
     - tags:
         karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
@@ -96,12 +99,12 @@ EOF
 
 # NodePools | Karpenter: https://karpenter.sh/docs/concepts/nodepools/
 #   - instance-types | Karpenter: https://karpenter.sh/docs/reference/instance-types/
-cat <<EOF > $SCRIPT_DIR/tmp/nodepool_cpu_01.yaml
+cat <<EOF > $SCRIPT_DIR/tmp/nodepool_default.yaml
 ---
 apiVersion: karpenter.sh/v1beta1
 kind: NodePool
 metadata:
-  name: cpu-01
+  name: default
 spec:
   template:
     spec:
@@ -132,7 +135,51 @@ spec:
     expireAfter: 720h # 30 * 24h = 720h
 EOF
 
-cat <<EOF > $SCRIPT_DIR/tmp/nodepool_gpu_01.yaml
+#
+# GPU NodePools と NodeClasses の設定ファイルを作成
+#
+cat <<EOF > $SCRIPT_DIR/tmp/nodeclass_gpu.yaml
+---
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: gpu
+spec:
+  amiFamily: AL2 # AL2023  # Amazon Linux 2023
+  role: "${KARPENTER_NODE_ROLE_NAME}" # replace with your cluster name
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
+  amiSelectorTerms:
+    #- id: "AMI_ID"
+    - name: "amazon-eks-gpu-node-${CLUSTER_VERSION}-*" # <- 新しい AL2 EKS Optimized AMI リリース時に自動的にアップデートされる。安全ではないので本番環境では注意.
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 64Gi
+        volumeType: gp3
+        iops: 3000
+        encrypted: false
+        deleteOnTermination: true
+        throughput: 125
+  userData: |
+    MIME-Version: 1.0
+    Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+
+    --==BOUNDARY==
+    Content-Type:text/x-shellscript; charset="us-ascii"
+
+    #!/bin/bash
+    set -e
+    echo "KARPENTER: Starting user data script"
+
+    --==BOUNDARY==--
+EOF
+# g4dn Family: https://karpenter.sh/docs/reference/instance-types/#g4dn-family
+cat <<EOF > $SCRIPT_DIR/tmp/nodepool_gpu.yaml
 ---
 apiVersion: karpenter.sh/v1beta1
 kind: NodePool
@@ -154,14 +201,14 @@ spec:
         - key: karpenter.k8s.aws/instance-family
           operator: In
           # g4dn: nvidia, g4ad: amd, g5g: nvidia
-          values: ["g4dn"]
+          values: ["g4dn", "g5"]
         - key: "karpenter.k8s.aws/instance-cpu"
           operator: In
-          values: ["4"]
+          values: ["4", "8"]
       nodeClassRef:
         apiVersion: karpenter.k8s.aws/v1
         kind: EC2NodeClass
-        name: default
+        name: gpu
       taints:
         - key: nvidia.com/gpu
           value: "true"
