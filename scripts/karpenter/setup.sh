@@ -48,6 +48,8 @@ fi
 #
 # NodePools と NodeClasses の設定ファイルを作成
 #
+# amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
+#
 mkdir -p $SCRIPT_DIR/tmp
 CLUSTER_VERSION=$(terraform -chdir=${TERRAFORM_DIR}/cluster output -raw eks_cluster_version)
 KARPENTER_NODE_ROLE_NAME=$(terraform -chdir=${TERRAFORM_DIR}/helm output -raw karpenter_node_role_name)
@@ -125,7 +127,7 @@ spec:
           operator: In
           values: ["2", "4"]
       nodeClassRef:
-        apiVersion: karpenter.k8s.aws/v1
+        apiVersion: karpenter.k8s.aws/v1beta1
         kind: EC2NodeClass
         name: default
   limits:
@@ -137,6 +139,8 @@ EOF
 
 #
 # GPU NodePools と NodeClasses の設定ファイルを作成
+#
+# amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
 #
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass_gpu.yaml
 ---
@@ -155,6 +159,7 @@ spec:
         karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
   amiSelectorTerms:
     #- id: "AMI_ID"
+    # 
     - name: "amazon-eks-gpu-node-${CLUSTER_VERSION}-*" # <- 新しい AL2 EKS Optimized AMI リリース時に自動的にアップデートされる。安全ではないので本番環境では注意.
   blockDeviceMappings:
     - deviceName: /dev/xvda
@@ -184,7 +189,7 @@ cat <<EOF > $SCRIPT_DIR/tmp/nodepool_gpu.yaml
 apiVersion: karpenter.sh/v1beta1
 kind: NodePool
 metadata:
-  name: gpu-01
+  name: gpu-nvidia
 spec:
   template:
     spec:
@@ -200,13 +205,12 @@ spec:
           values: ["spot"]
         - key: karpenter.k8s.aws/instance-family
           operator: In
-          # g4dn: nvidia, g4ad: amd, g5g: nvidia
-          values: ["g4dn", "g5"]
+          values: ["g4dn"]
         - key: "karpenter.k8s.aws/instance-cpu"
           operator: In
-          values: ["4", "8"]
+          values: ["4"]
       nodeClassRef:
-        apiVersion: karpenter.k8s.aws/v1
+        apiVersion: karpenter.k8s.aws/v1beta1
         kind: EC2NodeClass
         name: gpu
       taints:
