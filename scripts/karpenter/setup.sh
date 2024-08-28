@@ -160,6 +160,7 @@ EOF
 #
 # GPU NodePools と NodeClasses の設定ファイルを作成
 #
+# Amazon EKS 最適化高速 Amazon Linux AMI: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/eks-optimized-ami.html#gpu-ami
 # amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
 #
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass_gpu.yaml
@@ -169,7 +170,8 @@ kind: EC2NodeClass
 metadata:
   name: gpu
 spec:
-  amiFamily: AL2 # AL2023  # Amazon Linux 2023
+  # AL2023にはGPU用に最適化されたAMIが存在しないので AL2 を使う
+  amiFamily: AL2
   role: "${KARPENTER_NODE_ROLE_NAME}" # replace with your cluster name
   subnetSelectorTerms:
     - tags:
