@@ -26,9 +26,6 @@ resource "aws_security_group" "additional_node_sg" {
 resource "aws_launch_template" "node_instance" {
   name = "${var.app_name}-${var.stage}-${var.node_group_name}-EKSNodeLaunchTemplate"
 
-  // イメージ ID を明示的に指定する場合
-  // image_id = nonsensitive(aws_ssm_parameter.eks_ami_release_version.value)
-
   key_name = var.key_pair_name
   vpc_security_group_ids = concat([
     data.aws_eks_cluster.this.vpc_config[0].cluster_security_group_id,
@@ -66,23 +63,22 @@ resource "aws_launch_template" "node_instance" {
  *   https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/retrieve-ami-id.html
  *
  *  下記のコマンドで AMI ID を取得できます
- *  K8S_VERSION=1.30
- *  AMI_TYPE=amazon-linux-2023/x86_64/standard
- *  REGION=ap-northeast-1
- *  
- *  aws ssm get-parameter \
- *    --name /aws/service/eks/optimized-ami/${K8S_VERSION}/${AMI_TYPE}/recommended/image_id \
- *      --region $REGION \
- *      --query "Parameter.Value" \
- *      --output text
- */
-// locals {
-//   ami_type = "amazon-linux-2023/x86_64/standard"
-// }
-// data "aws_ssm_parameter" "eks_ami_release_version" {
-//   name = "/aws/service/eks/optimized-ami/${data.aws_eks_cluster.this.version}/${local.ami_type}/recommended/release_version"
-// }
-
+K8S_VERSION=1.30
+AMI_TYPE=amazon-linux-2023/x86_64/standard
+REGION=ap-northeast-1
+   
+aws ssm get-parameter \
+  --name /aws/service/eks/optimized-ami/${K8S_VERSION}/${AMI_TYPE}/recommended/image_id \
+  --region $REGION \
+  --query "Parameter.Value" \
+  --output text
+*/
+locals {
+  ami_type = "amazon-linux-2023/x86_64/standard"
+}
+data "aws_ssm_parameter" "eks_ami_release_version" {
+  name = "/aws/service/eks/optimized-ami/${data.aws_eks_cluster.this.version}/${local.ami_type}/recommended/release_version"
+}
 
 /**
  * EKSノードグループ
@@ -98,6 +94,9 @@ resource "aws_eks_node_group" "this" {
   capacity_type = var.capacity_type
   // スポット料金: https://aws.amazon.com/jp/ec2/spot/pricing/
   instance_types = var.instance_types
+  ami_type = "AL2023_x86_64_STANDARD"  # https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType
+  # 最新のAMIを追跡する書き方: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group#tracking-the-latest-eks-node-group-ami-releases
+  release_version = nonsensitive(data.aws_ssm_parameter.eks_ami_release_version.value)
 
   scaling_config {
     desired_size = var.desired_size

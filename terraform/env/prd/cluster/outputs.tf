@@ -22,6 +22,18 @@ output "eks_cluster_version" {
   value = module.eks.cluster.cluster_version
 }
 
+output "eks_cluster_endpoint" {
+  value = module.eks.cluster.cluster_endpoint
+}
+
+output "eks_cluster_certificate_authority_data" {
+  value = module.eks.cluster.cluster_certificate_authority_data
+}
+output "eks_cluster_service_cidr" {
+  value = module.eks.cluster.cluster_service_cidr
+}
+
+
 output "eks_cluster_primary_sg_id" {
   value = module.eks.cluster.cluster_primary_security_group_id
 }
