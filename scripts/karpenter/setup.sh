@@ -48,16 +48,18 @@ fi
 #
 # NodePools と NodeClasses の設定ファイルを作成
 #
-# amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
-#
 mkdir -p $SCRIPT_DIR/tmp
 CLUSTER_VERSION=$(terraform -chdir=${TERRAFORM_DIR}/cluster output -raw eks_cluster_version)
+CLUSTER_ENDPOINT=$(terraform -chdir=${TERRAFORM_DIR}/cluster output -raw eks_cluster_endpoint)
+CLUSTER_CERTIFICATE_AUTHORITY_DATA=$(terraform -chdir=${TERRAFORM_DIR}/cluster output -raw eks_cluster_certificate_authority_data)
+CLUSTER_SERVICE_CIDR=$(terraform -chdir=${TERRAFORM_DIR}/cluster output -raw eks_cluster_service_cidr)
 KARPENTER_NODE_ROLE_NAME=$(terraform -chdir=${TERRAFORM_DIR}/helm output -raw karpenter_node_role_name)
+
 
 #
 # default の NodePools と NodeClasses の設定ファイルを作成
 #
-# NodeClasses | Karpenter: https://karpenter.sh/docs/concepts/nodeclasses/
+# NodeClasses | Karpenter: https://karpenter.sh/v0.37/concepts/nodeclasses/
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass_default.yaml
 ---
 apiVersion: karpenter.k8s.aws/v1beta1
@@ -65,7 +67,7 @@ kind: EC2NodeClass
 metadata:
   name: default
 spec:
-  amiFamily: AL2 # AL2023  # Amazon Linux 2023
+  amiFamily: AL2023
   role: "${KARPENTER_NODE_ROLE_NAME}" # replace with your cluster name
   subnetSelectorTerms:
     - tags:
@@ -75,28 +77,46 @@ spec:
         karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
   amiSelectorTerms:
     #- id: "AMI_ID"
-    - name: "amazon-eks-node-${CLUSTER_VERSION}-*" # <- 新しい AL2 EKS Optimized AMI リリース時に自動的にアップデートされる。安全ではないので本番環境では注意.
+    # amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
+    - name: "amazon-eks-node-al2023-x86_64-standard-${CLUSTER_VERSION}-*" # <- 新しい AL2 EKS Optimized AMI リリース時に自動的にアップデートされる。安全ではないので本番環境では注意.
+
+  # https://karpenter.sh/v0.37/concepts/nodeclasses/#al2023-1
   blockDeviceMappings:
     - deviceName: /dev/xvda
       ebs:
         volumeSize: 64Gi
         volumeType: gp3
         iops: 3000
-        encrypted: false
+        encrypted: true
         deleteOnTermination: true
         throughput: 125
+
+  # https://karpenter.sh/v0.37/concepts/nodeclasses/#al2023-3
+  # NodeConfigのリファレンス: https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/
+  # NodeConfigの設定例: https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/examples/
   userData: |
     MIME-Version: 1.0
-    Content-Type: multipart/mixed; boundary="==BOUNDARY=="
-
-    --==BOUNDARY==
-    Content-Type:text/x-shellscript; charset="us-ascii"
-
+    Content-Type: multipart/mixed; boundary="BOUNDARY"
+  
+    --BOUNDARY
+    Content-Type: application/node.eks.aws
+  
+    ---
+    apiVersion: node.eks.aws/v1alpha1
+    kind: NodeConfig
+    spec:
+      cluster:
+        name: ${CLUSTER_NAME}
+        apiServerEndpoint: ${CLUSTER_ENDPOINT}
+        certificateAuthority: ${CLUSTER_CERTIFICATE_AUTHORITY_DATA}
+        cidr: ${CLUSTER_SERVICE_CIDR}
+  
+    --BOUNDARY
+    Content-Type: text/x-shellscript; charset="us-ascii"
+  
     #!/bin/bash
-    set -e
-    echo "KARPENTER: Starting user data script"
-
-    --==BOUNDARY==--
+    echo "Hello, AL2023!"
+    --BOUNDARY--
 EOF
 
 # NodePools | Karpenter: https://karpenter.sh/docs/concepts/nodepools/
@@ -159,7 +179,7 @@ spec:
         karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
   amiSelectorTerms:
     #- id: "AMI_ID"
-    # 
+    # amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
     - name: "amazon-eks-gpu-node-${CLUSTER_VERSION}-*" # <- 新しい AL2 EKS Optimized AMI リリース時に自動的にアップデートされる。安全ではないので本番環境では注意.
   blockDeviceMappings:
     - deviceName: /dev/xvda
