@@ -3,29 +3,31 @@
 ```bash
 cd ${CONTAINER_PROJECT_ROOT}/scripts/karpenter
 # マニフェストファイルを作成
-setup.sh
+./setup.sh
 
-# ノードプールを作成
-kubectl apply -f tmp/node_pool.yaml
+# NodeClass, NodePoolを作成
+./apply.sh
 
-# ノードプールの削除
-kubectl delete -f tmp/node_pool.yaml
+# NodeClass, NodePoolの削除
+./delete.sh
 ```
 
 # 動作確認
 
 ```bash
-# スケールアップ
-${CONTAINER_PROJECT_ROOT}/scripts/karpenter/test/scale_up.sh
+# al2023-x86-64
+kubectl apply -f sample/al2023-x86-64.yaml
+kubectl delete -f sample/al2023-x86-64.yaml
 
-# スケールダウン
-${CONTAINER_PROJECT_ROOT}/scripts/karpenter/test/scale_down.sh
-```
+# al2-x86-64-nvidia
+kubectl apply -f sample/al2-x86-64-nvidia.yaml
+kubectl delete -f sample/al2-x86-64-nvidia.yaml
 
-# デバッグ
+# bottlerocket-x86-64
+kubectl apply -f sample/bottlerocket-x86-64.yaml
+kubectl delete -f sample/bottlerocket-x86-64.yaml
 
-
-```bash
-# karpenter controllerのログ確認
-${CONTAINER_PROJECT_ROOT}/scripts/karpenter/tail_log.sh
+# bottlerocket-x86-64-nvidia
+kubectl apply -f sample/bottlerocket-x86-64-nvidia.yaml
+kubectl delete -f sample/bottlerocket-x86-64-nvidia.yaml
 ```
