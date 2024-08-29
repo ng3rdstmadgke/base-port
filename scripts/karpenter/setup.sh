@@ -58,7 +58,7 @@ KARPENTER_NODE_ROLE_NAME=$(terraform -chdir=${TERRAFORM_DIR}/helm output -raw ka
 
 
 #
-# default の NodePools と NodeClasses の設定ファイルを作成
+# AL2023, x86-64
 #
 # NodeClasses | Karpenter: https://karpenter.sh/v0.37/concepts/nodeclasses/
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass-al2023-x86-64.yaml
@@ -162,7 +162,7 @@ spec:
 EOF
 
 #
-# GPU NodePools と NodeClasses の設定ファイルを作成
+# AL2, x86-64, NVIDIA
 #
 # Amazon EKS 最適化高速 Amazon Linux AMI: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/eks-optimized-ami.html#gpu-ami
 # amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
@@ -197,6 +197,7 @@ spec:
         deleteOnTermination: true
         throughput: 125
   # EKS起動テンプレート: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/launch-templates.html#launch-template-custom-ami
+  #                     https://karpenter.sh/v0.37/concepts/nodeclasses/#al2ubuntu
   # bootstrap.sh のソースコード: https://github.com/awslabs/amazon-eks-ami/blob/main/templates/al2/runtime/bootstrap.sh
   userData: |
     MIME-Version: 1.0
@@ -209,7 +210,8 @@ spec:
     #!/bin/bash -xe
     /etc/eks/bootstrap.sh '${CLUSTER_NAME}' \
       --apiserver-endpoint '${CLUSTER_ENDPOINT}' \
-      --b64-cluster-ca '${CLUSTER_CERTIFICATE_AUTHORITY_DATA}'
+      --b64-cluster-ca '${CLUSTER_CERTIFICATE_AUTHORITY_DATA}' \
+      --kubelet-extra-args '--node-labels=baseport.net/nodeclass=al2-x86-64-nvidia'
 
     echo "KARPENTER: Starting user data script"
     --==BOUNDARY==--
@@ -244,7 +246,7 @@ spec:
         apiVersion: karpenter.k8s.aws/v1beta1
         kind: EC2NodeClass
         name: al2-x86-64-nvidia
-      # nvidia-device-pluginデーモンセットが起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
+      # nvidia-device-pluginデーモンセットを起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
       # nvidia-device-pluginデーモンセットのtoleration: https://github.com/NVIDIA/k8s-device-plugin/blob/v0.16.2/deployments/helm/nvidia-device-plugin/values.yaml#L85
       #taints:
       #  - key: nvidia.com/gpu
@@ -258,10 +260,11 @@ spec:
 EOF
 
 #
-# bottlerocket
+# bottlerocket, x86-64
 #
 # NodeClasses | Karpenter: https://karpenter.sh/v0.37/concepts/nodeclasses/
 # bottlerocket | Github: https://github.com/bottlerocket-os/bottlerocket
+# bottlerocket Settings: https://bottlerocket.dev/en/os/1.20.x/api/settings-index/
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass-bottlerocket-x86-64.yaml
 ---
 apiVersion: karpenter.k8s.aws/v1beta1
@@ -344,6 +347,107 @@ spec:
         apiVersion: karpenter.k8s.aws/v1beta1
         kind: EC2NodeClass
         name: bottlerocket-x86-64
+  limits:
+    cpu: 20
+  disruption:
+    consolidationPolicy: WhenUnderutilized
+    expireAfter: 720h # 30 * 24h = 720h
+EOF
+
+#
+# bottlerocket, x86-64, NVIDIA
+#
+# NodeClasses | Karpenter: https://karpenter.sh/v0.37/concepts/nodeclasses/
+# bottlerocket | Github: https://github.com/bottlerocket-os/bottlerocket
+# bottlerocket Settings: https://bottlerocket.dev/en/os/1.20.x/api/settings-index/
+cat <<EOF > $SCRIPT_DIR/tmp/nodeclass-bottlerocket-x86-64-nvidia.yaml
+---
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: bottlerocket-x86-64-nvidia
+spec:
+  amiFamily: Bottlerocket
+  role: "${KARPENTER_NODE_ROLE_NAME}" # replace with your cluster name
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
+  amiSelectorTerms:
+    #- id: "AMI_ID"
+    # bottlerocketのami: https://github.com/bottlerocket-os/bottlerocket#variants
+    - name: "bottlerocket-aws-k8s-${CLUSTER_VERSION}-nvidia-x86_64-*"
+
+  # https://karpenter.sh/v0.37/concepts/nodeclasses/#bottlerocket-1
+  blockDeviceMappings:
+    # Root device
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 4Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+    # Data device: Container resources such as images and logs
+    - deviceName: /dev/xvdb
+      ebs:
+        volumeSize: 64Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+
+  # UserDataのリファレンス: https://bottlerocket.dev/en/os/1.20.x/api/settings-index/
+  # UserDataの設定例: https://karpenter.sh/v0.37/concepts/nodeclasses/#bottlerocket
+  userData: |
+    [settings]
+    [settings.kubernetes]
+    api-server = '${CLUSTER_ENDPOINT}'
+    cluster-certificate = '${CLUSTER_CERTIFICATE_AUTHORITY_DATA}'
+    cluster-name = '${CLUSTER_NAME}'
+
+    [settings.kubernetes.node-labels]
+    'baseport.net/nodeclass' = 'bottlerocket-x86-64-nvidia'
+
+EOF
+
+# NodePools | Karpenter: https://karpenter.sh/docs/concepts/nodepools/
+#   - instance-types | Karpenter: https://karpenter.sh/docs/reference/instance-types/
+cat <<EOF > $SCRIPT_DIR/tmp/nodepool-bottlerocket-x86-64-nvidia-standard.yaml
+---
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: bottlerocket-x86-64-nvidia-standard
+spec:
+  template:
+    spec:
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["g4dn"]
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values: ["4"]
+      nodeClassRef:
+        apiVersion: karpenter.k8s.aws/v1beta1
+        kind: EC2NodeClass
+        name: bottlerocket-x86-64-nvidia
+      # nvidia-device-pluginデーモンセットを起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
+      # nvidia-device-pluginデーモンセットのtoleration: https://github.com/NVIDIA/k8s-device-plugin/blob/v0.16.2/deployments/helm/nvidia-device-plugin/values.yaml#L85
+      #taints:
+      #  - key: nvidia.com/gpu
+      #    value: "true"
+      #    effect: "NoSchedule"
   limits:
     cpu: 20
   disruption:
