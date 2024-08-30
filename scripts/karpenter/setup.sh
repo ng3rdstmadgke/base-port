@@ -143,7 +143,7 @@ spec:
           values: ["linux"]
         - key: karpenter.sh/capacity-type
           operator: In
-          values: ["spot"]
+          values: ["spot"]  # spot or on-demand
         - key: karpenter.k8s.aws/instance-family
           operator: In
           values: ["t3", "t3a", "m5", "m5a", "m6i", "m6a", "m7i", "m7a"]
@@ -237,7 +237,7 @@ spec:
           values: ["linux"]
         - key: karpenter.sh/capacity-type
           operator: In
-          values: ["spot"]
+          values: ["spot"]  # spot or on-demand
         - key: karpenter.k8s.aws/instance-family
           operator: In
           values: ["g4dn"]
@@ -338,7 +338,7 @@ spec:
           values: ["linux"]
         - key: karpenter.sh/capacity-type
           operator: In
-          values: ["spot"]
+          values: ["spot"]  # spot or on-demand
         - key: karpenter.k8s.aws/instance-family
           operator: In
           values: ["t3", "t3a", "m5", "m5a", "m6i", "m6a", "m7i", "m7a"]
@@ -433,7 +433,7 @@ spec:
           values: ["linux"]
         - key: karpenter.sh/capacity-type
           operator: In
-          values: ["spot"]
+          values: ["spot"]  # spot or on-demand
         - key: karpenter.k8s.aws/instance-family
           operator: In
           values: ["g4dn"]
@@ -444,6 +444,107 @@ spec:
         apiVersion: karpenter.k8s.aws/v1beta1
         kind: EC2NodeClass
         name: bottlerocket-x86-64-nvidia
+      # nvidia-device-pluginデーモンセットを起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
+      # nvidia-device-pluginデーモンセットのtoleration: https://github.com/NVIDIA/k8s-device-plugin/blob/v0.16.2/deployments/helm/nvidia-device-plugin/values.yaml#L85
+      #taints:
+      #  - key: nvidia.com/gpu
+      #    value: "true"
+      #    effect: "NoSchedule"
+  limits:
+    cpu: 20
+  disruption:
+    consolidationPolicy: WhenUnderutilized
+    expireAfter: 720h # 30 * 24h = 720h
+EOF
+
+#
+# bottlerocket, aarch64, NVIDIA
+#
+# NodeClasses | Karpenter: https://karpenter.sh/v0.37/concepts/nodeclasses/
+# bottlerocket | Github: https://github.com/bottlerocket-os/bottlerocket
+# bottlerocket Settings: https://bottlerocket.dev/en/os/1.20.x/api/settings-index/
+cat <<EOF > $SCRIPT_DIR/tmp/nodeclass-bottlerocket-aarch64-nvidia.yaml
+---
+apiVersion: karpenter.k8s.aws/v1beta1
+kind: EC2NodeClass
+metadata:
+  name: bottlerocket-aarch64-nvidia
+spec:
+  amiFamily: Bottlerocket
+  role: "${KARPENTER_NODE_ROLE_NAME}" # replace with your cluster name
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${CLUSTER_NAME}" # replace with your cluster name
+  amiSelectorTerms:
+    #- id: "AMI_ID"
+    # bottlerocketのami: https://github.com/bottlerocket-os/bottlerocket#variants
+    - name: "bottlerocket-aws-k8s-${CLUSTER_VERSION}-nvidia-aarch64-*"
+
+  # https://karpenter.sh/v0.37/concepts/nodeclasses/#bottlerocket-1
+  blockDeviceMappings:
+    # Root device
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 4Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+    # Data device: Container resources such as images and logs
+    - deviceName: /dev/xvdb
+      ebs:
+        volumeSize: 64Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+
+  # UserDataのリファレンス: https://bottlerocket.dev/en/os/1.20.x/api/settings-index/
+  # UserDataの設定例: https://karpenter.sh/v0.37/concepts/nodeclasses/#bottlerocket
+  userData: |
+    [settings]
+    [settings.kubernetes]
+    api-server = '${CLUSTER_ENDPOINT}'
+    cluster-certificate = '${CLUSTER_CERTIFICATE_AUTHORITY_DATA}'
+    cluster-name = '${CLUSTER_NAME}'
+
+EOF
+
+# NodePools | Karpenter: https://karpenter.sh/docs/concepts/nodepools/
+#   - instance-types | Karpenter: https://karpenter.sh/docs/reference/instance-types/
+cat <<EOF > $SCRIPT_DIR/tmp/nodepool-bottlerocket-aarch64-nvidia-standard.yaml
+---
+apiVersion: karpenter.sh/v1beta1
+kind: NodePool
+metadata:
+  name: bottlerocket-aarch64-nvidia-standard
+spec:
+  template:
+    metadata:
+      labels:
+        karpenter.baseport.net/nodeclass: bottlerocket-aarch64-nvidia
+    spec:
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["arm64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]  # spot or on-demand
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["g5g"]
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values: ["4"]
+      nodeClassRef:
+        apiVersion: karpenter.k8s.aws/v1beta1
+        kind: EC2NodeClass
+        name: bottlerocket-aarch64-nvidia
       # nvidia-device-pluginデーモンセットを起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
       # nvidia-device-pluginデーモンセットのtoleration: https://github.com/NVIDIA/k8s-device-plugin/blob/v0.16.2/deployments/helm/nvidia-device-plugin/values.yaml#L85
       #taints:

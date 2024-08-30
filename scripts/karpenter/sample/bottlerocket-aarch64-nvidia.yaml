@@ -1,0 +1,38 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bottlerocket-aarch64-nvidia-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bottlerocket-aarch64-nvidia-test
+  template:
+    metadata:
+      labels:
+        app: bottlerocket-aarch64-nvidia-test
+    spec:
+      containers:
+        - name: bottlerocket-aarch64-nvidia-test
+          # https://hub.docker.com/r/nvidia/cuda/tags
+          image: nvidia/cuda:12.6.0-cudnn-devel-ubuntu22.04
+          args:
+          - "nvidia-smi"
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+      affinity:
+        # Node Affinityの例: https://cstoku.dev/posts/2018/k8sdojo-18/#node-affinity%E3%81%AE%E4%BE%8B
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "karpenter.sh/nodepool"
+                    operator: "In"
+                    values:
+                      - "bottlerocket-aarch64-nvidia-standard"
+      #tolerations:
+      #  - key: "nvidia.com/gpu"
+      #    operator: "Exists"
+      #    effect: "NoSchedule"
