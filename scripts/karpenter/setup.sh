@@ -111,9 +111,6 @@ spec:
         apiServerEndpoint: ${CLUSTER_ENDPOINT}
         certificateAuthority: ${CLUSTER_CERTIFICATE_AUTHORITY_DATA}
         cidr: ${CLUSTER_SERVICE_CIDR}
-    kubelet:
-      flags:
-      - --node-labels="baseport.net/nodeclass=al2023-x86-64"
   
     --BOUNDARY
     Content-Type: text/x-shellscript; charset="us-ascii"
@@ -133,6 +130,9 @@ metadata:
   name: al2023-x86-64-standard
 spec:
   template:
+    metadata:
+      labels:
+        karpenter.baseport.net/nodeclass: al2023-x86-64
     spec:
       requirements:
         - key: kubernetes.io/arch
@@ -210,8 +210,7 @@ spec:
     #!/bin/bash -xe
     /etc/eks/bootstrap.sh '${CLUSTER_NAME}' \
       --apiserver-endpoint '${CLUSTER_ENDPOINT}' \
-      --b64-cluster-ca '${CLUSTER_CERTIFICATE_AUTHORITY_DATA}' \
-      --kubelet-extra-args '--node-labels=baseport.net/nodeclass=al2-x86-64-nvidia'
+      --b64-cluster-ca '${CLUSTER_CERTIFICATE_AUTHORITY_DATA}'
 
     echo "KARPENTER: Starting user data script"
     --==BOUNDARY==--
@@ -225,6 +224,9 @@ metadata:
   name: al2-x86-64-nvidia-standard
 spec:
   template:
+    metadata:
+      labels:
+        karpenter.baseport.net/nodeclass: al2-x86-64-nvidia
     spec:
       requirements:
         - key: kubernetes.io/arch
@@ -311,9 +313,6 @@ spec:
     cluster-certificate = '${CLUSTER_CERTIFICATE_AUTHORITY_DATA}'
     cluster-name = '${CLUSTER_NAME}'
 
-    [settings.kubernetes.node-labels]
-    'baseport.net/nodeclass' = 'bottlerocket-x86-64'
-
 EOF
 
 # NodePools | Karpenter: https://karpenter.sh/docs/concepts/nodepools/
@@ -326,6 +325,9 @@ metadata:
   name: bottlerocket-x86-64-standard
 spec:
   template:
+    metadata:
+      labels:
+        karpenter.baseport.net/nodeclass: bottlerocket-x86-64
     spec:
       requirements:
         - key: kubernetes.io/arch
@@ -406,9 +408,6 @@ spec:
     cluster-certificate = '${CLUSTER_CERTIFICATE_AUTHORITY_DATA}'
     cluster-name = '${CLUSTER_NAME}'
 
-    [settings.kubernetes.node-labels]
-    'baseport.net/nodeclass' = 'bottlerocket-x86-64-nvidia'
-
 EOF
 
 # NodePools | Karpenter: https://karpenter.sh/docs/concepts/nodepools/
@@ -421,6 +420,9 @@ metadata:
   name: bottlerocket-x86-64-nvidia-standard
 spec:
   template:
+    metadata:
+      labels:
+        karpenter.baseport.net/nodeclass: bottlerocket-x86-64-nvidia
     spec:
       requirements:
         - key: kubernetes.io/arch

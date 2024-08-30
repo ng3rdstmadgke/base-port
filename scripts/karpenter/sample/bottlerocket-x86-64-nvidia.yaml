@@ -2,19 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nvidia-smi
+  name: bottlerocket-x86-64-nvidia-test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: nvidia-smi
+      app: bottlerocket-x86-64-nvidia-test
   template:
     metadata:
       labels:
-        app: nvidia-smi
+        app: bottlerocket-x86-64-nvidia-test
     spec:
       containers:
-        - name: nvidia-smi
+        - name: bottlerocket-x86-64-nvidia-test
           # https://hub.docker.com/r/nvidia/cuda/tags
           image: nvidia/cuda:12.6.0-cudnn-devel-ubuntu22.04
           args:

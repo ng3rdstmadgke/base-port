@@ -21,19 +21,40 @@ resource "aws_iam_role" "karpenter_node_role" {
   })
 }
 
+resource "aws_iam_policy" "karpenter_custom_node_policy" {
+  name = "${var.app_name}-${var.stage}-KarpenterCustomNodePolicy"
+  policy = jsonencode({
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "KMSDecryptforSSM",
+          "Effect": "Allow",
+          "Resource": [
+            "*"
+          ],
+          "Action": [
+            "kms:Decrypt"
+          ]
+        } 
+      ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "karpenter_node_role_policy" {
-  for_each = toset([
+  for_each = {
     // Amazon VPC CNI プラグインが EKS ワーカーノードを構成するために必要な権限
-    "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
+    cni_policy: "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy",
     // Amazon EKS ワーカーノードが EKS クラスターに接続できるようにする
-    "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+    worker_policy: "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy",
     // Amazon EC2 コンテナレジストリ内のリポジトリへの読み取り専用アクセスを許可
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
+    ecr_readonly_policy: "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
     // Amazon EC2 用の AWS Systems Manager サービスコア機能
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  ])
+    ssm_core_policy: "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    // 追加のノードポリシー
+    custom_policy: aws_iam_policy.karpenter_custom_node_policy.arn,
+  }
   role = aws_iam_role.karpenter_node_role.name
-  policy_arn = each.key
+  policy_arn = each.value
 }
 
 /**
