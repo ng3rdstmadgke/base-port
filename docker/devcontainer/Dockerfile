@@ -82,3 +82,7 @@ RUN curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases
 
 RUN curl -sSL https://install.python-poetry.org | POETRY_HOME=/home/vscode/.pypoetry python3 - && \
     chown -R vscode:vscode /home/vscode/.pypoetry
+
+RUN wget https://github.com/alexei-led/spotinfo/releases/download/1.0.7/spotinfo_linux_amd64 \
+    chmod 755 spotinfo_linux_amd64 \
+    mv spotinfo_linux_amd64 /usr/local/bin/spotinfo
