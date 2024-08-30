@@ -157,8 +157,13 @@ spec:
   limits:
     cpu: 20
   disruption:
+    # 統合のために考慮すべきノードの種類
+    # WhenUnderutilized: すべてのノードを統合の対象とし、ノードが十分に活用されておらず、コスト削減のために変更できると判断した場合にノードを削除・置換しようとする
+    # WhenEmpty: ワークロードポッドを含まないノードのみを統合の対象とする
     consolidationPolicy: WhenUnderutilized
-    expireAfter: 720h # 30 * 24h = 720h
+    # クラスタにノードが存在できる期間
+    # ノードの長期間の稼動による問題(メモリリークなど)のリスクを低減する
+    expireAfter: 720h
 EOF
 
 #
@@ -257,8 +262,13 @@ spec:
   limits:
     cpu: 20
   disruption:
+    # 統合のために考慮すべきノードの種類
+    # WhenUnderutilized: すべてのノードを統合の対象とし、ノードが十分に活用されておらず、コスト削減のために変更できると判断した場合にノードを削除・置換しようとする
+    # WhenEmpty: ワークロードポッドを含まないノードのみを統合の対象とする
     consolidationPolicy: WhenUnderutilized
-    expireAfter: 720h # 30 * 24h = 720h
+    # クラスタにノードが存在できる期間
+    # ノードの長期間の稼動による問題(メモリリークなど)のリスクを低減する
+    expireAfter: 720h
 EOF
 
 #
@@ -352,8 +362,13 @@ spec:
   limits:
     cpu: 20
   disruption:
+    # 統合のために考慮すべきノードの種類
+    # WhenUnderutilized: すべてのノードを統合の対象とし、ノードが十分に活用されておらず、コスト削減のために変更できると判断した場合にノードを削除・置換しようとする
+    # WhenEmpty: ワークロードポッドを含まないノードのみを統合の対象とする
     consolidationPolicy: WhenUnderutilized
-    expireAfter: 720h # 30 * 24h = 720h
+    # クラスタにノードが存在できる期間
+    # ノードの長期間の稼動による問題(メモリリークなど)のリスクを低減する
+    expireAfter: 720h
 EOF
 
 #
@@ -453,8 +468,13 @@ spec:
   limits:
     cpu: 20
   disruption:
+    # 統合のために考慮すべきノードの種類
+    # WhenUnderutilized: すべてのノードを統合の対象とし、ノードが十分に活用されておらず、コスト削減のために変更できると判断した場合にノードを削除・置換しようとする
+    # WhenEmpty: ワークロードポッドを含まないノードのみを統合の対象とする
     consolidationPolicy: WhenUnderutilized
-    expireAfter: 720h # 30 * 24h = 720h
+    # クラスタにノードが存在できる期間
+    # ノードの長期間の稼動による問題(メモリリークなど)のリスクを低減する
+    expireAfter: 720h
 EOF
 
 #
@@ -554,6 +574,11 @@ spec:
   limits:
     cpu: 20
   disruption:
+    # 統合のために考慮すべきノードの種類
+    # WhenUnderutilized: すべてのノードを統合の対象とし、ノードが十分に活用されておらず、コスト削減のために変更できると判断した場合にノードを削除・置換しようとする
+    # WhenEmpty: ワークロードポッドを含まないノードのみを統合の対象とする
     consolidationPolicy: WhenUnderutilized
-    expireAfter: 720h # 30 * 24h = 720h
+    # クラスタにノードが存在できる期間
+    # ノードの長期間の稼動による問題(メモリリークなど)のリスクを低減する
+    expireAfter: 720h
 EOF
