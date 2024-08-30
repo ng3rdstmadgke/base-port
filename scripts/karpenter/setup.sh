@@ -250,10 +250,10 @@ spec:
         name: al2-x86-64-nvidia
       # nvidia-device-pluginデーモンセットを起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
       # nvidia-device-pluginデーモンセットのtoleration: https://github.com/NVIDIA/k8s-device-plugin/blob/v0.16.2/deployments/helm/nvidia-device-plugin/values.yaml#L85
-      #taints:
-      #  - key: nvidia.com/gpu
-      #    value: "true"
-      #    effect: "NoSchedule"
+      taints:
+        - key: nvidia.com/gpu
+          value: "true"
+          effect: "NoSchedule"
   limits:
     cpu: 20
   disruption:
@@ -446,10 +446,10 @@ spec:
         name: bottlerocket-x86-64-nvidia
       # nvidia-device-pluginデーモンセットを起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
       # nvidia-device-pluginデーモンセットのtoleration: https://github.com/NVIDIA/k8s-device-plugin/blob/v0.16.2/deployments/helm/nvidia-device-plugin/values.yaml#L85
-      #taints:
-      #  - key: nvidia.com/gpu
-      #    value: "true"
-      #    effect: "NoSchedule"
+      taints:
+        - key: nvidia.com/gpu
+          value: "true"
+          effect: "NoSchedule"
   limits:
     cpu: 20
   disruption:
@@ -547,10 +547,10 @@ spec:
         name: bottlerocket-aarch64-nvidia
       # nvidia-device-pluginデーモンセットを起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
       # nvidia-device-pluginデーモンセットのtoleration: https://github.com/NVIDIA/k8s-device-plugin/blob/v0.16.2/deployments/helm/nvidia-device-plugin/values.yaml#L85
-      #taints:
-      #  - key: nvidia.com/gpu
-      #    value: "true"
-      #    effect: "NoSchedule"
+      taints:
+        - key: nvidia.com/gpu
+          value: "true"
+          effect: "NoSchedule"
   limits:
     cpu: 20
   disruption:

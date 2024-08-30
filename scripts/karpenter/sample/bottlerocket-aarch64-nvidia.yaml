@@ -32,7 +32,7 @@ spec:
                     operator: "In"
                     values:
                       - "bottlerocket-aarch64-nvidia-standard"
-      #tolerations:
-      #  - key: "nvidia.com/gpu"
-      #    operator: "Exists"
-      #    effect: "NoSchedule"
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
