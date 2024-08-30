@@ -12,5 +12,4 @@ locals {
   oidc_provider = replace(var.eks_oidc_issure_url, "https://", "")
   service_account = "karpenter"
   namespace = "kube-system"
-  version = "0.37.0"
 }

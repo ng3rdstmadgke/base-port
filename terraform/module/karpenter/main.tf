@@ -84,7 +84,8 @@ resource "aws_iam_role" "karpenter_controller_role" {
 
 resource "aws_iam_policy" "karpenter_controller_policy" {
   name = "${var.app_name}-${var.stage}-KarpenterControllerPolicy"
-  policy = jsonencode({
+  policy = jsonencode(
+    {
       "Version": "2012-10-17",
       "Statement": [
         {
@@ -136,7 +137,8 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
           ],
           "Condition": {
             "StringEquals": {
-              "aws:RequestTag/kubernetes.io/cluster/${local.cluster_name}": "owned"
+              "aws:RequestTag/kubernetes.io/cluster/${local.cluster_name}": "owned",
+              "aws:RequestTag/eks:eks-cluster-name": "${local.cluster_name}"
             },
             "StringLike": {
               "aws:RequestTag/karpenter.sh/nodepool": "*"
@@ -158,6 +160,7 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
           "Condition": {
             "StringEquals": {
               "aws:RequestTag/kubernetes.io/cluster/${local.cluster_name}": "owned",
+              "aws:RequestTag/eks:eks-cluster-name": "${local.cluster_name}",
               "ec2:CreateAction": [
                 "RunInstances",
                 "CreateFleet",
@@ -181,8 +184,12 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
             "StringLike": {
               "aws:ResourceTag/karpenter.sh/nodepool": "*"
             },
+            "StringEqualsIfExists": {
+              "aws:RequestTag/eks:eks-cluster-name": "${local.cluster_name}"
+            },
             "ForAllValues:StringEquals": {
               "aws:TagKeys": [
+                "eks:eks-cluster-name",
                 "karpenter.sh/nodeclaim",
                 "Name"
               ]
@@ -266,13 +273,14 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
         {
           "Sid": "AllowScopedInstanceProfileCreationActions",
           "Effect": "Allow",
-          "Resource": "*",
+          "Resource": "arn:aws:iam::${local.account_id}:instance-profile/*",
           "Action": [
             "iam:CreateInstanceProfile"
           ],
           "Condition": {
             "StringEquals": {
               "aws:RequestTag/kubernetes.io/cluster/${local.cluster_name}": "owned",
+              "aws:RequestTag/eks:eks-cluster-name": "${local.cluster_name}",
               "aws:RequestTag/topology.kubernetes.io/region": "ap-northeast-1"
             },
             "StringLike": {
@@ -283,7 +291,7 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
         {
           "Sid": "AllowScopedInstanceProfileTagActions",
           "Effect": "Allow",
-          "Resource": "*",
+          "Resource": "arn:aws:iam::${local.account_id}:instance-profile/*",
           "Action": [
             "iam:TagInstanceProfile"
           ],
@@ -292,6 +300,7 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
               "aws:ResourceTag/kubernetes.io/cluster/${local.cluster_name}": "owned",
               "aws:ResourceTag/topology.kubernetes.io/region": "ap-northeast-1",
               "aws:RequestTag/kubernetes.io/cluster/${local.cluster_name}": "owned",
+              "aws:RequestTag/eks:eks-cluster-name": "${local.cluster_name}",
               "aws:RequestTag/topology.kubernetes.io/region": "ap-northeast-1"
             },
             "StringLike": {
@@ -303,7 +312,7 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
         {
           "Sid": "AllowScopedInstanceProfileActions",
           "Effect": "Allow",
-          "Resource": "*",
+          "Resource": "arn:aws:iam::${local.account_id}:instance-profile/*",
           "Action": [
             "iam:AddRoleToInstanceProfile",
             "iam:RemoveRoleFromInstanceProfile",
@@ -322,7 +331,7 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
         {
           "Sid": "AllowInstanceProfileReadActions",
           "Effect": "Allow",
-          "Resource": "*",
+          "Resource": "arn:aws:iam::${local.account_id}:instance-profile/*",
           "Action": "iam:GetInstanceProfile"
         },
         {
@@ -332,7 +341,8 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
           "Action": "eks:DescribeCluster"
         }
       ]
-    })
+    }
+  )
 }
 
 resource "aws_iam_role_policy_attachment" "karpenter_controller_policy" {
@@ -428,7 +438,20 @@ resource "aws_sqs_queue_policy" "karpenter_interruption_queue" {
           ]
         },
         "Action": "sqs:SendMessage",
-        "Resource": aws_sqs_queue.karpenter_interruption_queue.arn,
+        "Resource": "${aws_sqs_queue.karpenter_interruption_queue.arn}",
+      },
+      {
+        "Sid": "DenyHTTP",
+        "Effect": "Deny",
+        "Principal": "*",
+        "Action": "sqs:*",
+        "Resource": "${aws_sqs_queue.karpenter_interruption_queue.arn}",
+        "Condition": {
+          "Bool": {
+            "aws:SecureTransport": false
+          }
+        }
+
       }
     ]
   })
@@ -534,7 +557,7 @@ resource "helm_release" "karpenter" {
   name       = "karpenter"
   #repository = "xxxxxxxxxxxxxxxxxxxxx"
   chart      = "oci://public.ecr.aws/karpenter/karpenter"
-  version    = local.version
+  version    = "1.0.1"
   namespace  = local.namespace
   create_namespace = true
 
