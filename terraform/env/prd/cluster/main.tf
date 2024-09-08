@@ -57,8 +57,8 @@ module default_node_group {
   key_pair_name = var.key_pair_name
   node_role_arn = module.eks.node_role_arn
   // スポット料金: https://aws.amazon.com/jp/ec2/spot/pricing/
-  instance_types = ["t3a.large"]
-  desired_size = 2
+  instance_types = ["t3a.xlarge"]
+  desired_size = 1
 
   depends_on = [
     module.eks
@@ -105,6 +105,66 @@ resource "aws_eks_addon" "eks_pod_identity_agent" {
   cluster_name  = module.eks.cluster.cluster_name
   addon_name   = "eks-pod-identity-agent"
   addon_version = "v1.3.0-eksbuild.1"
+  depends_on = [
+    module.default_node_group
+  ]
+}
+
+
+module ebs_csi_controller_sa_role {
+  source = "../../../module/irsa"
+  app_name = local.app_name
+  stage = local.stage
+  cluster_name = module.eks.cluster.cluster_name
+  role_name = "AmazonEksEbsCsiDriverRole"
+  managed_policies = [
+    "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  ]
+  policies = {
+    "EncryptEBSVolume" = jsonencode(
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "kms:CreateGrant",
+              "kms:ListGrants",
+              "kms:RevokeGrant"
+            ],
+            "Resource": ["*"],
+            "Condition": {
+              "Bool": {
+                "kms:GrantIsForAWSResource": "true"
+              }
+            }
+          },
+          {
+            "Effect": "Allow",
+            "Action": [
+              "kms:Encrypt",
+              "kms:Decrypt",
+              "kms:ReEncrypt*",
+              "kms:GenerateDataKey*",
+              "kms:DescribeKey"
+            ],
+            "Resource": ["*"]
+          }
+        ]
+      }
+    )
+  }
+  namespace = "kube-system"
+  service_account = "ebs-csi-controller-sa"
+}
+
+resource "aws_eks_addon" "aws_ebs_csi_driver" {
+  cluster_name  = module.eks.cluster.cluster_name
+  addon_name   = "aws-ebs-csi-driver"
+  // バージョンの確認: aws eks describe-addon-versions --addon-name aws-ebs-csi-driver
+  addon_version = "v1.34.0-eksbuild.1"
+  // ebs-csi-driverのインストールにはIAMロールが必要: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/ebs-csi.html#csi-iam-role
+  service_account_role_arn = module.ebs_csi_controller_sa_role.role_arn
   depends_on = [
     module.default_node_group
   ]
