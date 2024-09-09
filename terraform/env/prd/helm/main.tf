@@ -134,6 +134,6 @@ module nvidia_device_plugin {
   source = "../../../module/nvidia-device-plugin"
 }
 
-module kubecost {
-  source = "../../../module/kubecost"
-}
+#module kubecost {
+#  source = "../../../module/kubecost"
+#}
