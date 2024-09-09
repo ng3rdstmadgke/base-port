@@ -1,0 +1,45 @@
+opencost:
+  customPricing:
+    enabled: true
+    provider: aws
+    costModel:
+      # https://github.com/opencost/opencost/blob/develop/configs/aws.json
+      description: Modified pricing configuration.
+      CPU: 0.031611
+      spotCPU: 0.006655
+      RAM: 0.004237
+      spotRAM: 0.000892
+      GPU: 0.95
+      storage: 0.00005479452
+      zoneNetworkEgress: 0.01
+      regionNetworkEgress: 0.01
+      internetNetworkEgress: 0.143
+      spotLabel: ""
+      spotLabelValue: ""
+      awsServiceKeyName: ""
+      awsServiceKeySecret: ""
+      awsSpotDataRegion: ""
+      awsSpotDataBucket: ""
+      awsSpotDataPrefix: ""
+      athenaBucketName: ""
+      athenaRegion: ""
+      athenaDatabase: ""
+      athenaTable: ""
+      projectID: "674582907715"
+  exporter:
+    defaultClusterId: baseport-prd
+    extraEnv:
+      EMIT_KSM_V1_METRICS: "false"
+      EMIT_KSM_V1_METRICS_ONLY: "true"
+      LOG_LEVEL: warn #error
+  prometheus:
+    internal:
+      enabled: true
+      serviceName: prometheus-kube-state-metrics
+      namespaceName: prometheus-system
+  ui:
+    enabled: true
+  metrics:
+    serviceMonitor:
+      enabled: true
+      namespace: prometheus-system

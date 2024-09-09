@@ -137,3 +137,12 @@ module nvidia_device_plugin {
 #module kubecost {
 #  source = "../../../module/kubecost"
 #}
+
+module prometheus {
+  source = "../../../module/prometheus"
+}
+
+module opencost {
+  source = "../../../module/opencost"
+  depends_on = [ module.prometheus ]
+}

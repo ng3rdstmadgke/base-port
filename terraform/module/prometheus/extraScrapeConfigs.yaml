@@ -1,0 +1,25 @@
+# 設定値: https://github.com/prometheus-community/helm-charts/blob/main/charts/prometheus/values.yaml
+extraScrapeConfigs: |
+  - job_name: opencost
+    honor_labels: true
+    scrape_interval: 1m
+    scrape_timeout: 10s
+    metrics_path: /metrics
+    scheme: http
+    dns_sd_configs:
+    - names:
+      - opencost.opencost
+      type: 'A'
+      port: 9003
+
+prometheus-pushgateway:
+  enabled: false
+
+alertmanager:
+  enabled: false
+
+server:
+  persistentVolume:
+    enabled: true
+    size: 32Gi
+    #storageClass: gp3
