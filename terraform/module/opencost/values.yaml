@@ -1,8 +1,10 @@
+# 設定値: https://github.com/opencost/opencost-helm-chart/blob/main/charts/opencost/values.yaml
 opencost:
   customPricing:
     enabled: true
     provider: aws
     costModel:
+      # デフォルト値:https://github.com/opencost/opencost/blob/develop/configs/default.json
       # https://github.com/opencost/opencost/blob/develop/configs/aws.json
       description: Modified pricing configuration.
       CPU: 0.031611
@@ -18,24 +20,24 @@ opencost:
       spotLabelValue: ""
       awsServiceKeyName: ""
       awsServiceKeySecret: ""
-      awsSpotDataRegion: ""
-      awsSpotDataBucket: ""
+      awsSpotDataRegion: "ap-southeast-1"
+      awsSpotDataBucket: "${datafeed_bucket_name}"
       awsSpotDataPrefix: ""
       athenaBucketName: ""
       athenaRegion: ""
       athenaDatabase: ""
       athenaTable: ""
-      projectID: "674582907715"
+      projectID: "${account_id}"
   exporter:
-    defaultClusterId: baseport-prd
+    defaultClusterId: ${cluster_name}
     extraEnv:
       EMIT_KSM_V1_METRICS: "false"
       EMIT_KSM_V1_METRICS_ONLY: "true"
-      LOG_LEVEL: warn #error
+      LOG_LEVEL: debug # debug, info, warn, error
   prometheus:
     internal:
       enabled: true
-      serviceName: prometheus-kube-state-metrics
+      serviceName: prometheus-server
       namespaceName: prometheus-system
   ui:
     enabled: true
@@ -43,3 +45,7 @@ opencost:
     serviceMonitor:
       enabled: true
       namespace: prometheus-system
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: ${servicea_account_role_arn}

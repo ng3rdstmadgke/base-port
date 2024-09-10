@@ -144,5 +144,9 @@ module prometheus {
 
 module opencost {
   source = "../../../module/opencost"
+  app_name = local.app_name
+  stage = local.stage
+  cluster_name = local.cluster_name
+  datafeed_bucket_name = "spot-instance-datafeed-dm5b7kok4h"
   depends_on = [ module.prometheus ]
 }
