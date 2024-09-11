@@ -52,7 +52,10 @@ resource "aws_iam_role" "opencost_sa_role" {
     ]
   })
 
-  depends_on = [ aws_iam_policy.s3_spot_datafeed_access_policy ]
+  depends_on = [
+    aws_iam_policy.s3_spot_datafeed_access_policy,
+    aws_iam_policy.cloud_cost_integration_policy,
+  ]
 }
 
 resource "aws_iam_policy" "s3_spot_datafeed_access_policy" {
@@ -75,7 +78,16 @@ resource "aws_iam_policy" "s3_spot_datafeed_access_policy" {
             ],
             "Effect": "Allow",
             "Sid": "SpotDataAccess"
-        }
+        },
+        {
+            "Action": [
+                "cur:*",
+                "athena:*",
+            ],
+            "Resource": [ "*" ],
+            "Effect": "Allow",
+            "Sid": "CUR"
+        },
     ]
   })
 }
@@ -83,6 +95,30 @@ resource "aws_iam_policy" "s3_spot_datafeed_access_policy" {
 resource "aws_iam_role_policy_attachment" "s3_spot_datafeed_access_policy" {
   role = aws_iam_role.opencost_sa_role.name
   policy_arn = aws_iam_policy.s3_spot_datafeed_access_policy.arn
+}
+
+resource "aws_iam_policy" "cloud_cost_integration_policy" {
+  name = "${var.app_name}-${var.stage}-cloudCostIntegrationPolicy"
+  policy = jsonencode({
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            # TODO: 必要なものだけに絞る
+            "Action": [
+                "cur:*",
+                "athena:*",
+                "s3:*"
+            ],
+            "Resource": [ "*" ],
+            "Effect": "Allow",
+            "Sid": "CloudCostIntegration"
+        },
+    ]
+  })
+}
+resource "aws_iam_role_policy_attachment" "cloud_cost_integration_policy" {
+  role = aws_iam_role.opencost_sa_role.name
+  policy_arn = aws_iam_policy.cloud_cost_integration_policy.arn
 }
 
 /**

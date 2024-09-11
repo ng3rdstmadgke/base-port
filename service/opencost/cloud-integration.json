@@ -1,0 +1,17 @@
+{
+  "aws": {
+    "athena": [
+      {
+        "bucket": "cur-adcbh73ym1",
+        "region": "ap-northeast-1",
+        "database": "athenacurcfn_kubecost",
+        "table": "kubecost",
+        "workgroup": "primary",
+        "account": "674582907715",
+        "authorizer": {
+          "authorizerType": "AWSServiceAccount"
+        }
+      }
+    ]
+  }
+}
