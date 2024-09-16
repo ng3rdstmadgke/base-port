@@ -11,8 +11,8 @@
 運用コンテナにログイン
 
 ```bash
-${CONTAINER_PROJECT_ROOT}/scripts/tools/build.sh --push
-${CONTAINER_PROJECT_ROOT}/scripts/tools/run.sh
+${CONTAINER_PROJECT_ROOT}/service/tools/build.sh --push
+${CONTAINER_PROJECT_ROOT}/service/tools/run.sh
 ```
 
 DBにログイン
@@ -35,11 +35,11 @@ mysql-login
 - リポジトリ: [keycloak/keycloak-quickstarts | GitHub](https://github.com/keycloak/keycloak-quickstarts) 
 
 ```bash
-kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/keycloak/keycloak.yaml
+kubectl apply -f ${CONTAINER_PROJECT_ROOT}/service/keycloak/keycloak.yaml
 ```
 
 # 削除
 
 ```bash
-kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/keycloak/keycloak.yaml
+kubectl delete -f ${CONTAINER_PROJECT_ROOT}/service/keycloak/keycloak.yaml
 ```
