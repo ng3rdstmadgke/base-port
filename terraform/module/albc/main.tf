@@ -113,8 +113,42 @@ resource "helm_release" "aws-load-balancer-controller" {
 }
 
 /**
- * ALB のセキュリティグループ (動作確認用で現状利用していない)
+ * ALB のセキュリティグループ (動作確認用のセキュリティグループ)
  */
+resource "aws_security_group" "ingress_internal" {
+  name        = "${var.app_name}-${var.stage}-IngressInternal"
+  description = "Allow HTTP, HTTPS access."
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description = "Allow HTTP access."
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = var.ingress_internal_cidr_blocks
+  }
+
+  ingress {
+    description = "Allow HTTPS access."
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = var.ingress_internal_cidr_blocks
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = {
+    Name = "${var.app_name}-${var.stage}-IngressInternal"
+  }
+}
+
 
 resource "aws_security_group" "ingress_dev" {
   name        = "${var.app_name}-${var.stage}-IngressDev"

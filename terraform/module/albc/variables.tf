@@ -3,6 +3,11 @@ variable stage {}
 variable vpc_id {}
 variable eks_oidc_issure_url {}
 
+variable ingress_internal_cidr_blocks {
+  type = list(string)
+  default = []
+}
+
 variable ingress_dev_cidr_blocks {
   type = list(string)
   default = ["0.0.0.0/0"]

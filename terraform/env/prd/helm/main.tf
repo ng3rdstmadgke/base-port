@@ -78,6 +78,7 @@ module albc {
   // aws eks describe-cluster --name baseport-prd --output text --query "cluster.identity.oidc.issuer"
   eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
   ingress_dev_cidr_blocks = var.albc_ingress_dev_cidr_blocks
+  ingress_internal_cidr_blocks = var.albc_ingress_internal_cidr_blocks
 }
 
 module keda {
