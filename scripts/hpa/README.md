@@ -18,7 +18,7 @@ https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/horizontal-pod-autoscaler
 ## デプロイ
 
 ```bash
-kubectl apply -f scripts/hpa/test/hpa-test.yaml 
+kubectl apply -f scripts/hpa/sample/hpa-test.yaml 
 ```
 
 ※ hpaは以下のようにCLIで作成することも可能  
@@ -57,5 +57,5 @@ $ kubectl run -i --tty load-generator-2 --rm --image=busybox:1.28 --restart=Neve
 # 削除
 
 ```bash
-kubectl delete -f scripts/hpa/test/hpa-test.yaml
+kubectl delete -f scripts/hpa/sample/hpa-app.yaml
 ```

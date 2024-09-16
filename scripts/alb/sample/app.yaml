@@ -2,15 +2,15 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ingress-test-deploy
+  name: ingress-test-deployment
 spec:
   selector:
     matchLabels:
-      run: ingress-test-app
+      app: ingress-test
   template:
     metadata:
       labels:
-        run: ingress-test-app
+        app: ingress-test
     spec:
       containers:
       - name: php-apache
@@ -33,7 +33,7 @@ spec:
   ports:
   - port: 80
   selector:
-    run: ingress-test-app
+    app: ingress-test
 ---
 # Ingress | Kubernetes API Reference:
 # https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26/#ingress-v1-networking-k8s-io

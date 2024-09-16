@@ -69,11 +69,11 @@ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/ingress-prd-sample.yaml
 
 ```bash
 # デプロイ
-kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/test/test-app.yaml
+kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/sample/app.yaml
 
 # https://ingress-test.dev.baseport.net にアクセス
 
 # 削除
-kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/test/test-app.yaml
+kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/alb/sample/app.yaml
 
 ```
