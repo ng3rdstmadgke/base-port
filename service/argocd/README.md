@@ -5,11 +5,11 @@
 
 ```bash
 # argocd-server をターゲットとするALBを作成
-kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/argocd/ingress.yaml
+kubectl apply -f ${CONTAINER_PROJECT_ROOT}/service/argocd/ingress.yaml
 ```
 
 # ポートフォワーディング
 
 ```bash
-${CONTAINER_PROJECT_ROOT}/scripts/argocd/port-forward.sh
+${CONTAINER_PROJECT_ROOT}/service/argocd/port-forward.sh
 ```

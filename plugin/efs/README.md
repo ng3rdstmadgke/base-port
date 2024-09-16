@@ -6,11 +6,11 @@
 # デプロイ
 
 ```bash
-# ${CONTAINER_PROJECT_ROOT}/scripts/efs/tmp/sc.yaml の作成
-${CONTAINER_PROJECT_ROOT}/scripts/efs/setup.sh
+# ${CONTAINER_PROJECT_ROOT}/plugin/efs/tmp/sc.yaml の作成
+${CONTAINER_PROJECT_ROOT}/plugin/efs/setup.sh
 
 # StorageClass作成
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/efs/tmp/sc.yaml
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/tmp/sc.yaml
 storageclass.storage.k8s.io/efs-sc created
 
 # 確認
@@ -24,7 +24,7 @@ gp2      kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   false   
 
 ```bash
 # pvc, podの作成
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/efs/sample/pvc_pod.yaml
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/pvc_pod.yaml
 
 # pvcの確認
 $ kubectl get pvc
@@ -81,7 +81,7 @@ tmpfs           1.9G     0  1.9G   0% /proc/acpi
 tmpfs           1.9G     0  1.9G   0% /sys/firmware
 
 # サンプルpod削除
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/efs/sample/pvc_pod.yaml
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/pvc_pod.yaml
 ```
 
 
@@ -100,5 +100,5 @@ $ kubectl describe sc efs-sc
 # 削除
 
 ```bash
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/efs/sc.yaml
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sc.yaml
 ```

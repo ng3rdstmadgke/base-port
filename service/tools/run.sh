@@ -9,8 +9,8 @@ fi
 REMOTE_IMAGE="$(terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd output -raw tools_ecr)"
 ROLE_ARN="$(terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd output -raw tools_role)"
 
-mkdir -p ${CONTAINER_PROJECT_ROOT}/scripts/tools/tmp
-cat <<EOF > ${CONTAINER_PROJECT_ROOT}/scripts/tools/tmp/app.yaml
+mkdir -p ${CONTAINER_PROJECT_ROOT}/service/tools/tmp
+cat <<EOF > ${CONTAINER_PROJECT_ROOT}/service/tools/tmp/app.yaml
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -36,6 +36,6 @@ spec:
     command: ["sleep", "infinity"]
 EOF
 
-kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/tools/tmp/app.yaml
+kubectl apply -f ${CONTAINER_PROJECT_ROOT}/service/tools/tmp/app.yaml
 kubectl wait --for=condition=Ready -n ${NAMESPACE} pod/tools
 kubectl exec -it -n ${NAMESPACE} tools -- /bin/bash

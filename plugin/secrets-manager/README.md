@@ -5,12 +5,12 @@
 Secretsとマニフェストの生成
 
 ```bash
-$ ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/setup.sh
+$ ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/setup.sh
 ```
 SecretProviderClassの作成
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/tmp/spc_1.yaml
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_1.yaml
 
 # 確認
 $ kubectl get secretproviderclass
@@ -23,7 +23,7 @@ $ kubectl describe secretproviderclass ascp-test-secrets-1
 Deploymentの作成
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/tmp/deployment_1.yaml
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_1.yaml
 
 # podの確認
 $ kubectl get po
@@ -46,8 +46,8 @@ $ kubectl exec -ti ascp-test-deployment-1-995f98fd7-j4ntx -- cat /mnt/secrets-st
 削除
 
 ```bash
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/tmp/deployment_1.yaml
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/tmp/spc_1.yaml
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_1.yaml
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_1.yaml
 ```
 
 ## 2. Kubernetes の Secret としてPodの環境変数にアサインする方法
@@ -55,12 +55,12 @@ $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/tmp
 Secretsとマニフェストの生成
 
 ```bash
-$ ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/setup.sh
+$ ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/setup.sh
 ```
 SecretProviderClassの作成
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/tmp/spc_2.yaml
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_2.yaml
 
 # 確認
 $ kubectl get secretproviderclass
@@ -73,7 +73,7 @@ $ kubectl describe secretproviderclass ascp-test-secrets-2
 Deploymentの作成
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/tmp/deployment_2.yaml
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
 
 # podの確認
 $ kubectl get po
@@ -102,6 +102,6 @@ $ kubectl exec -ti ascp-test-deployment-2-6f77b87997-pvbjv -- printenv DB_SECRET
 削除
 
 ```bash
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/tmp/deployment_2.yaml
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/secrets-manager/sample/tmp/spc_2.yaml
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_2.yaml
 ```

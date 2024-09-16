@@ -76,7 +76,7 @@ terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/service apply -auto
 
 ```bash
 # Karpenterのノードプールを作成
-./scripts/karpenter/setup.sh
+./plugin/karpenter/setup.sh
 ```
 
 

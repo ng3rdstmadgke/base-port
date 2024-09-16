@@ -2,7 +2,7 @@
 
 ```bash
 # デプロイ
-kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/keycloak/test/oauth2-proxy-sample/app.yaml
+kubectl apply -f ${CONTAINER_PROJECT_ROOT}/service/oauth2-proxy-sample/app.yaml
 ```
 
 - http://oauth2-proxy-sample.dev.baseport.net
@@ -13,5 +13,5 @@ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/scripts/keycloak/test/oauth2-proxy-sa
 
 ```bash
 # 削除
-kubectl delete -f ${CONTAINER_PROJECT_ROOT}/scripts/keycloak/test/oauth2-proxy-sample/app.yaml
+kubectl delete -f ${CONTAINER_PROJECT_ROOT}/service/oauth2-proxy-sample/app.yaml
 ```

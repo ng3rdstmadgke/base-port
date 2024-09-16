@@ -1,7 +1,7 @@
 # セットアップ
 
 ```bash
-cd ${CONTAINER_PROJECT_ROOT}/scripts/karpenter
+cd ${CONTAINER_PROJECT_ROOT}/plugin/karpenter
 # マニフェストファイルを作成
 ./setup.sh
 

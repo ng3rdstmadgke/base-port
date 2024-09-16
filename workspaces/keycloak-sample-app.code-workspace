@@ -1,5 +1,5 @@
 {
 	"folders": [
-    {"path":"../scripts/keycloak/test/keycloak-sample-app"}
+    {"path":"../service/keycloak-sample-app"}
   ]
 }
