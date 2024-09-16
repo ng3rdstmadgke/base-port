@@ -1,12 +1,13 @@
 # 動作確認
 
-## 1. シークレットファイルをマウントする方法
-
 Secretsとマニフェストの生成
 
 ```bash
 $ ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/setup.sh
 ```
+
+## 1. シークレットファイルをマウントする方式
+
 SecretProviderClassの作成
 
 ```bash
@@ -16,30 +17,20 @@ $ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/s
 $ kubectl get secretproviderclass
 NAME                  AGE
 ascp-test-secrets-1   8s
-
-# 詳細
-$ kubectl describe secretproviderclass ascp-test-secrets-1
 ```
+
 Deploymentの作成
+
 
 ```bash
 $ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_1.yaml
+```
 
-# podの確認
-$ kubectl get po
-NAME                                     READY   STATUS    RESTARTS   AGE
-ascp-test-deployment-1-995f98fd7-j4ntx   1/1     Running   0          7s
+確認
 
-# ボリュームのマウント状態の確認
-$ kubectl get secretproviderclasspodstatus
-NAME                                                                 AGE
-ascp-test-deployment-1-995f98fd7-j4ntx-default-ascp-test-secrets-1   29s
-
-# ボリュームのマウント状態の詳細 (<pod name>-<namespace>-<secretproviderclass name>)
-$ $ kubectl describe secretproviderclasspodstatus ascp-test-deployment-1-995f98fd7-j4ntx-default-ascp-test-secrets-1
-
-# SecretsManagerの中身を確認 (シークレット名の "/" は "_" に変換される)
-$ kubectl exec -ti ascp-test-deployment-1-995f98fd7-j4ntx -- cat /mnt/secrets-store/_baseport_prd_ascp-test
+```bash
+# k9sで ascp-test-deployment-1-* podに接続
+$ cat /mnt/secrets-store/_baseport_prd_ascp-test
 {"username":"hogehoge", "password":"piyopiyo"}
 ```
 
@@ -50,13 +41,8 @@ $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/
 $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_1.yaml
 ```
 
-## 2. Kubernetes の Secret としてPodの環境変数にアサインする方法
+## 2. Podの環境変数にアサインする方式
 
-Secretsとマニフェストの生成
-
-```bash
-$ ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/setup.sh
-```
 SecretProviderClassの作成
 
 ```bash
@@ -66,37 +52,30 @@ $ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/s
 $ kubectl get secretproviderclass
 NAME                  AGE
 ascp-test-secrets-2   8s
-
-# 詳細
-$ kubectl describe secretproviderclass ascp-test-secrets-2
 ```
+
 Deploymentの作成
+
 
 ```bash
 $ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
 
-# podの確認
-$ kubectl get po
-NAME                                     READY   STATUS    RESTARTS   AGE
-ascp-test-deployment-1-995f98fd7-j4ntx   1/1     Running   0          7s
-
 # ボリュームのマウント状態の確認
 $ kubectl get secretproviderclasspodstatus
-NAME                                                                 AGE
-ascp-test-deployment-2-6f77b87997-pvbjv-default-ascp-test-secrets-2   4m38s
+```
 
-# ボリュームのマウント状態の詳細 (<pod name>-<namespace>-<secretproviderclass name>)
-$ kubectl describe secretproviderclasspodstatus  ascp-test-deployment-2-6f77b87997-pvbjv-default-ascp-test-secrets-2
+確認
 
-$ kubectl exec -ti ascp-test-deployment-2-6f77b87997-pvbjv -- printenv DB_SECRET
+```bash
+# k9sで ascp-test-deployment-2-* podに接続
+
+# マウントされているファイルの確認
+$ cat /mnt/secrets-store/_baseport_prd_ascp-test
 {"username":"hogehoge", "password":"piyopiyo"}
 
-# SecretsManagerの中身を確認 (シークレット名の "/" は "_" に変換される)
-#$ kubectl exec -ti ascp-test-deployment-2-6f77b87997-pvbjv -- cat /mnt/secrets-store/_baseport_prd_ascp-test
-#{"username":"hogehoge", "password":"piyopiyo"}
-#
-#$ kubectl exec -ti ascp-test-deployment-2-6f77b87997-pvbjv -- cat /k8s-secret/db_secret
-#{"username":"hogehoge", "password":"piyopiyo"}
+# 環境変数の確認
+$ echo $DB_SECRET
+{"username":"hogehoge", "password":"piyopiyo"}
 ```
 
 削除
@@ -104,4 +83,50 @@ $ kubectl exec -ti ascp-test-deployment-2-6f77b87997-pvbjv -- printenv DB_SECRET
 ```bash
 $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
 $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_2.yaml
+```
+
+## 3. JSONをパースしてPodの環境変数にアサインする方式
+
+SecretProviderClassの作成
+
+```bash
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_3.yaml
+
+# 確認
+$ kubectl get secretproviderclass
+NAME                  AGE
+ascp-test-secrets-3   8s
+```
+
+Deploymentの作成
+
+
+```bash
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_3.yaml
+
+# ボリュームのマウント状態の確認
+$ kubectl get secretproviderclasspodstatus
+```
+
+確認
+
+```bash
+# k9sで ascp-test-deployment-2-* podに接続
+
+# マウントされているファイルの確認
+$ cat /mnt/secrets-store/_baseport_prd_ascp-test
+{"username":"hogehoge", "password":"piyopiyo"}
+
+# 環境変数の確認
+$ echo $DB_USER
+hogehoge
+$ echo $DB_PASSWORD
+piyopiyo
+```
+
+削除
+
+```bash
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_3.yaml
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_3.yaml
 ```

@@ -32,7 +32,11 @@ fi
 
 mkdir -p $SCRIPT_DIR/tmp
 
-cat <<EOF | envsubst > $SCRIPT_DIR/tmp/spc_1.yaml
+#
+# シークレットを指定のファイルでマウントする
+#
+cat <<EOF > $SCRIPT_DIR/tmp/spc_1.yaml
+# https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver_SecretProviderClass.html
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
@@ -45,7 +49,7 @@ spec:
           objectType: "secretsmanager"
 EOF
 
-cat <<EOF | envsubst > $SCRIPT_DIR/tmp/deployment_1.yaml
+cat <<EOF > $SCRIPT_DIR/tmp/deployment_1.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -81,12 +85,12 @@ EOF
 
 
 #
-# - シークレット情報をSecretオブジェクトに同期する:
-#   https://developer.mamezou-tech.com/blogs/2022/07/13/secrets-store-csi-driver-intro/#%E3%82%B7%E3%83%BC%E3%82%AF%E3%83%AC%E3%83%83%E3%83%88%E6%83%85%E5%A0%B1%E3%82%92secret%E3%82%AA%E3%83%96%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AB%E5%90%8C%E6%9C%9F%E3%81%99%E3%82%8B
-# - Sync as Kubernetes Secret | Secrets Store CSI Driver
-#   https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret.html
+# シークレット情報をSecretオブジェクトに同期する
 #
-cat <<EOF | envsubst > $SCRIPT_DIR/tmp/spc_2.yaml
+# - シークレット情報をSecretオブジェクトに同期する: https://developer.mamezou-tech.com/blogs/2022/07/13/secrets-store-csi-driver-intro/#%E3%82%B7%E3%83%BC%E3%82%AF%E3%83%AC%E3%83%83%E3%83%88%E6%83%85%E5%A0%B1%E3%82%92secret%E3%82%AA%E3%83%96%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E3%81%AB%E5%90%8C%E6%9C%9F%E3%81%99%E3%82%8B
+# - Sync as Kubernetes Secret | Secrets Store CSI Driver: https://secrets-store-csi-driver.sigs.k8s.io/topics/sync-as-kubernetes-secret.html
+cat <<EOF > $SCRIPT_DIR/tmp/spc_2.yaml
+# https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver_SecretProviderClass.html
 apiVersion: secrets-store.csi.x-k8s.io/v1
 kind: SecretProviderClass
 metadata:
@@ -94,7 +98,7 @@ metadata:
 spec:
   provider: aws
   secretObjects:
-    - secretName: ascp-test-secrets-2-k8s-secret
+    - secretName: db-secret-2
       type: Opaque
       data:
         - key: db_secret
@@ -105,7 +109,7 @@ spec:
           objectType: "secretsmanager"
 EOF
 
-cat <<EOF | envsubst > $SCRIPT_DIR/tmp/deployment_2.yaml
+cat <<EOF > $SCRIPT_DIR/tmp/deployment_2.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -121,34 +125,99 @@ spec:
     spec:
       serviceAccountName: ${SERVICE_ACCOUNT}
       containers:
-      - name: ascp-test-deployment
-        image: ubuntu
-        command: ["sleep", "infinity"]
-        env:
-        - name: DB_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: ascp-test-secrets-2-k8s-secret  # Secretオブジェクト名
-              key: db_secret
-# ※ Secretオブジェクトをディレクトリにマウントさせたい場合は、以下のようにvolumeMountsとvolumesを定義する
-#        volumeMounts:
-#          - name: csi-secret
-#            mountPath: /mnt/secrets-store
-#            readOnly: true
-#          # k8s Secretオブジェクトからマウント
-#          - name: k8s-secret
-#            mountPath: /k8s-secret
-#            readOnly: true
-#      volumes:
-#        # CSIストレージ指定
-#        - name: csi-secret
-#          csi:
-#            driver: secrets-store.csi.k8s.io
-#            readOnly: true
-#            volumeAttributes:
-#              secretProviderClass: ascp-test-secrets-2
-#        # SecretオブジェクトのVolume定義
-#        - name: k8s-secret
-#          secret:
-#            secretName: ascp-test-secrets-2-k8s-secret
+        - name: ascp-test-deployment
+          image: ubuntu
+          command: ["sleep", "infinity"]
+          env:
+          - name: DB_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: db-secret-2  # SecretObjectsのsecretName
+                key: db_secret
+          volumeMounts:
+            - name: csi-secret-volume
+              mountPath: /mnt/secrets-store
+              readOnly: true
+      volumes:
+        # CSIストレージ指定
+        - name: csi-secret-volume
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: ascp-test-secrets-2
+EOF
+
+#
+# シークレット情報をSecretオブジェクトに同期する (jsonをパースして取得)
+#
+cat <<EOF > $SCRIPT_DIR/tmp/spc_3.yaml
+# https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver_SecretProviderClass.html
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: ascp-test-secrets-3
+spec:
+  provider: aws
+  secretObjects:
+    - secretName: db-secret-3
+      type: Opaque
+      data:
+        - key: username
+          objectName: alias_username
+        - key: password
+          objectName: alias_password
+  parameters:
+    objects: |
+        - objectName: "${SECRETS_NAME}"
+          objectType: "secretsmanager"
+          jmesPath:
+            - path: "username"
+              objectAlias: "alias_username"  # ポッドにマウントするファイル名
+            - path: "password"
+              objectAlias: "alias_password"  # ポッドにマウントするファイル名
+EOF
+
+cat <<EOF > $SCRIPT_DIR/tmp/deployment_3.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ascp-test-deployment-3
+spec:
+  selector:
+    matchLabels:
+      app: app-3
+  template:
+    metadata:
+      labels:
+        app: app-3
+    spec:
+      serviceAccountName: ${SERVICE_ACCOUNT}
+      containers:
+        - name: ascp-test-deployment
+          image: ubuntu
+          command: ["sleep", "infinity"]
+          env:
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: db-secret-3 # SecretObjectsのsecretName
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-secret-3 # SecretObjectsのsecretName
+                key: password
+          volumeMounts:
+            - name: csi-secret-volume
+              mountPath: /mnt/secrets-store
+              readOnly: true
+      volumes:
+        # CSIストレージ指定
+        - name: csi-secret-volume
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: ascp-test-secrets-3
 EOF
