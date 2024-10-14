@@ -52,3 +52,14 @@ kubectl get po -n amazon-cloudwatch
 - `/aws/containerinsights/<Cluster_Name>/application`
 - `/aws/containerinsights/<Cluster_Name>/host`
 - `/aws/containerinsights/<Cluster_Name>/dataplane`
+
+
+## CloudwatchLogsのインサイトでログを分析するときのサンプルクエリ
+
+
+```
+fields @timestamp, stream, kubernetes.container_name, log
+| filter kubernetes.namespace_name = "kintaro-prd"
+| sort @timestamp desc
+| limit 10000
+```
