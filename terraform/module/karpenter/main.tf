@@ -50,6 +50,8 @@ resource "aws_iam_role_policy_attachment" "karpenter_node_role_policy" {
     ecr_readonly_policy: "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly",
     // Amazon EC2 用の AWS Systems Manager サービスコア機能
     ssm_core_policy: "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    // Fluent Bit で CloudWatch Logs にログを送信するためのポリシー
+    cloudwatch_logs_policy: "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess",
     // 追加のノードポリシー
     custom_policy: aws_iam_policy.karpenter_custom_node_policy.arn,
   }

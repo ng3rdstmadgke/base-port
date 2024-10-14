@@ -65,6 +65,12 @@ resource "aws_iam_policy" "eks_node_role_cni_ipv6_policy" {
   })
 }
 
+// Fluent Bit で CloudWatch Logs にログを送信するためのポリシー
+resource "aws_iam_role_policy_attachment" "cloud_watch_logs_full_access" {
+  role = aws_iam_role.eks_node_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "eks_node_role_cni_ipv6_policy" {
   role = aws_iam_role.eks_node_role.name
 
