@@ -8,6 +8,8 @@ terraform apply -auto-approve
 
 ポートフォワーディング
 
+https://www.opencost.io/docs/installation/ui#kubectl-port-forward
+
 
 ```bash
 kubectl port-forward --namespace opencost service/opencost 9003 9090
@@ -15,6 +17,8 @@ kubectl port-forward --namespace opencost service/opencost 9003 9090
 
 # オプション
 ## ingress作成
+
+https://www.opencost.io/docs/installation/ui#ingress-for-opencost-ui
 
 ```bash
 kubectl apply -f ingress.yaml
