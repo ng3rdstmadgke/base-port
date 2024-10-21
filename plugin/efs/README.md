@@ -20,48 +20,27 @@ efs-sc   efs.csi.aws.com         Delete          Immediate              false   
 gp2      kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   false                  13d
 ```
 
-# 動作確認
+# 動作確認 (動的プロビジョニング)
 
 ```bash
 # pvc, podの作成
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/pvc_pod.yaml
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/dynamic_provisioning.yaml
 
 # pvcの確認
 $ kubectl get pvc
-NAME      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-efs-pvc   Bound    pvc-ccd02133-a89e-47a4-ad3d-9e59f62a7f49   5Gi        RWX            efs-sc         <unset>                 10m
 
 # pvcの詳細
 $ kubectl describe pvc efs-pvc
-Name:          efs-pvc
-Namespace:     default
-StorageClass:  efs-sc
-Status:        Bound
-Volume:        pvc-4bd29497-4c67-4eec-af6e-d898df48527d
-Labels:        <none>
-Annotations:   pv.kubernetes.io/bind-completed: yes
-               pv.kubernetes.io/bound-by-controller: yes
-               volume.beta.kubernetes.io/storage-provisioner: efs.csi.aws.com
-               volume.kubernetes.io/storage-provisioner: efs.csi.aws.com
-Finalizers:    [kubernetes.io/pvc-protection]
-Capacity:      5Gi
-Access Modes:  RWX
-VolumeMode:    Filesystem
-Used By:       efs-app
-Events:
-  Type    Reason                 Age                From                                                                                     Message
-  ----    ------                 ----               ----                                                                                     -------
-  Normal  ExternalProvisioning   68s (x2 over 68s)  persistentvolume-controller                                                              Waiting for a volume to be created either by the external provisioner 'efs.csi.aws.com' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
-  Normal  Provisioning           68s                efs.csi.aws.com_efs-csi-controller-55c9f799f-n6vqh_d1ab6d7e-0a1c-4849-a4b3-e0acbe6a59c0  External provisioner is provisioning volume for claim "default/efs-pvc"
-  Normal  ProvisioningSucceeded  68s                efs.csi.aws.com_efs-csi-controller-55c9f799f-n6vqh_d1ab6d7e-0a1c-4849-a4b3-e0acbe6a59c0  Successfully provisioned volume pvc-4bd29497-4c67-4eec-af6e-d898df48527d
 
 # pvの確認
 $ kubectl get pv
-NAME                                       CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM             STORAGECLASS   VOLUMEATTRIBUTESCLASS   REASON   AGE
-pvc-ccd02133-a89e-47a4-ad3d-9e59f62a7f49   5Gi        RWX            Delete           Bound    default/efs-pvc   efs-sc         <unset>                          2m6s
+```
 
+k9sでpodにログイン
+
+```bash
 # efsに出力されているログの確認
-$ kubectl exec efs-app -- tail -n5 /data/out
+$ tail -f /data/out
 Tue Jul 9 09:04:59 UTC 2024
 Tue Jul 9 09:05:04 UTC 2024
 Tue Jul 9 09:05:09 UTC 2024
@@ -69,7 +48,7 @@ Tue Jul 9 09:05:14 UTC 2024
 Tue Jul 9 09:05:19 UTC 2024
 
 # /dataにマウントされていることを確認
-$ kubectl exec efs-app -- df -h
+$ df -h
 Filesystem      Size  Used Avail Use% Mounted on
 overlay          20G  5.3G   15G  27% /
 tmpfs            64M     0   64M   0% /dev
@@ -80,8 +59,42 @@ tmpfs           3.3G   12K  3.3G   1% /run/secrets/kubernetes.io/serviceaccount
 tmpfs           1.9G     0  1.9G   0% /proc/acpi
 tmpfs           1.9G     0  1.9G   0% /sys/firmware
 
-# サンプルpod削除
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/pvc_pod.yaml
+# ログアウト
+$ exit
+```
+
+k9sでpodを削除して再作成すると同じストレージをマウントできる。  
+※ PVCを消してしまうとストレージの内容は失われる  
+
+```bash
+# k9sでpodを削除
+k9s
+
+
+# 再デプロイ
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/dynamic_provisioning.yaml
+```
+
+リソースの削除
+
+```bash
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/dynamic_provisioning.yaml
+```
+
+# 動作確認 (静的プロビジョニング)
+
+こちらは動的プロビジョニングと異なり、 
+PersistentVolumeの `spec.persistentVolumeReclaimPolicy` が `Retain` なのでPVCが削除されてもPVは残る。  
+ただし、PVCを再作成しても同じPVは利用されない
+
+```bash
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/static_provisioning.yaml
+
+# 一回削除
+$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/static_provisioning.yaml
+
+# 再作成されると同じボリュームがマウントされている
+$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/static_provisioning.yaml
 ```
 
 

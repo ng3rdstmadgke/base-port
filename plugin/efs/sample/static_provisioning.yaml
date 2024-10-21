@@ -1,0 +1,83 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: efs-sample-2
+---
+# PVはKubernetes クラスター上に事前にプロビジョニングされたストレージ (ストレージそのもの)
+# https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#persistentvolume-v1-core
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: efs-sample-2
+  name: efs-pv
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem  # Filesystem or Block ボリュームをファイルシステムとして扱うか、ブロックデバイスとして扱うか
+  accessModes:
+    # 複数のPodから同時に読み書きされる
+    - ReadWriteMany  # ReadWriteOnce, ReadOnlyMany, ReadWriteMany
+  storageClassName: efs-sc
+  # PVがPVCから開放されたときの処理方法
+  # Retain: ボリュームは削除されずに保持される
+  # Delete: ボリュームは削除される
+  #persistentVolumeReclaimPolicy: Retain
+  persistentVolumeReclaimPolicy: Delete
+  csi:
+    driver: efs.csi.aws.com
+    volumeHandle: fs-0b3a33fdd77d2f23c
+---
+# PVCはユーザーやアプリケーションが PV をリクエストするためのもの (PVを使うためのリクエスト)
+# 条件に合うPVを探してバインドする
+# https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.30/#persistentvolumeclaim-v1-core
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: efs-sample-2
+  name: efs-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: efs-sc
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: efs-sample-2
+  name: efs-app-1
+spec:
+  containers:
+    - name: app
+      image: centos
+      command: ["/bin/sh"]
+      args: ['-c', 'while true; do echo "[$(hostname)] $(date -u)" >> /data/out; sleep 5; done']
+      volumeMounts:
+        - name: persistent-storage
+          mountPath: /data
+  volumes:
+    - name: persistent-storage
+      persistentVolumeClaim:
+        claimName: efs-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: efs-sample-2
+  name: efs-app-2
+spec:
+  containers:
+    - name: app
+      image: centos
+      command: ["/bin/sh"]
+      args: ['-c', 'while true; do echo "[$(hostname)] $(date -u)" >> /data/out; sleep 5; done']
+      volumeMounts:
+        - name: persistent-storage
+          mountPath: /data
+  volumes:
+    - name: persistent-storage
+      persistentVolumeClaim:
+        claimName: efs-pvc
