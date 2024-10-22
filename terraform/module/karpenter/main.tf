@@ -606,6 +606,11 @@ resource "helm_release" "karpenter" {
     value = local.service_account
   }
 
+  set {
+    name = "logLevel"
+    value = "debug"
+  }
+
 
   wait = true
 
