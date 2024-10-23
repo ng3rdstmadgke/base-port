@@ -151,3 +151,10 @@ module opencost {
   datafeed_bucket_name = "spot-instance-datafeed-dm5b7kok4h"
   depends_on = [ module.prometheus ]
 }
+
+module s3_csi_driver {
+  source = "../../../module/mountpoint-s3-csi-driver"
+  app_name = local.app_name
+  stage = local.stage
+  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+}
