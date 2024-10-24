@@ -1,3 +1,9 @@
+# 注意事項
+
+- ファイルの編集不可
+  - `>>` や `>` といったリダイレクトを使ったファイルの編集はできません
+
+
 # デプロイ手順
 
 - Mountpoint for Amazon S3 CSI ドライバーを使用して Amazon S3 オブジェクトにアクセスする | AWS
@@ -20,6 +26,9 @@ terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/helm apply -auto-ap
 ```
 
 # サンプルリソースデプロイ
+
+
+[サンプルマニフェスト](https://github.com/awslabs/mountpoint-s3-csi-driver/blob/main/examples/kubernetes/static_provisioning/static_provisioning.yaml)
 
 
 ```bash

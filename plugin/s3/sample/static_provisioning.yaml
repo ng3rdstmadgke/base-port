@@ -1,4 +1,9 @@
-# テンプレート: https://github.com/awslabs/mountpoint-s3-csi-driver/blob/main/examples/kubernetes/static_provisioning/static_provisioning.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: s3-sample-static
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -10,7 +15,7 @@ spec:
     - ReadWriteMany # Supported options: ReadWriteMany / ReadOnlyMany
   storageClassName: "" # Required for static provisioning
   claimRef: # To ensure no other PVCs can claim this PV
-    namespace: default # Namespace is required even though it's in "default" namespace.
+    namespace: s3-sample-static # Namespace is required even though it's in "default" namespace.
     name: s3-pvc # Name of your PVC
   mountOptions:
     - allow-delete
@@ -25,6 +30,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  namespace: s3-sample-static
   name: s3-pvc
 spec:
   accessModes:
@@ -38,13 +44,35 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
-  name: s3-app
+  namespace: s3-sample-static
+  name: s3-app-1
 spec:
   containers:
     - name: app
-      image: centos
-      command: ["/bin/sh"]
-      args: ["-c", "echo 'Hello from the container!' >> /data/$(date -u).txt; tail -f /dev/null"]
+      image: debian:bookworm-slim
+      command: ["/bin/bash"]
+      # リダイレクト(>>, >)によるファイルの編集はできないので注意
+      args: ['-c', 'while true; do touch /data/$(hostname)-$(date +"%Y%m%d-%H%M%S").txt; sleep 5; done']
+      volumeMounts:
+        - name: persistent-storage
+          mountPath: /data
+  volumes:
+    - name: persistent-storage
+      persistentVolumeClaim:
+        claimName: s3-pvc
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: s3-sample-static
+  name: s3-app-2
+spec:
+  containers:
+    - name: app
+      image: debian:bookworm-slim
+      command: ["/bin/bash"]
+      # リダイレクト(>>, >)によるファイルの編集はできないので注意
+      args: ['-c', 'while true; do touch /data/$(hostname)-$(date +"%Y%m%d-%H%M%S").txt; sleep 5; done']
       volumeMounts:
         - name: persistent-storage
           mountPath: /data
