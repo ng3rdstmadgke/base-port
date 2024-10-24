@@ -15,8 +15,8 @@ spec:
     - ReadWriteMany # Supported options: ReadWriteMany / ReadOnlyMany
   storageClassName: "" # Required for static provisioning
   claimRef: # To ensure no other PVCs can claim this PV
-    namespace: s3-sample-static # Namespace is required even though it's in "default" namespace.
-    name: s3-pvc # Name of your PVC
+    namespace: s3-sample-static # PVCのNamespace
+    name: s3-pvc # PVC名
   mountOptions:
     - allow-delete
     - region ap-northeast-1
