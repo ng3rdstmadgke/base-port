@@ -83,14 +83,16 @@ $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/dynamic_provisio
 
 # 動作確認 (静的プロビジョニング)
 
-こちらは動的プロビジョニングと異なり、 
-PersistentVolumeの `spec.persistentVolumeReclaimPolicy` が `Retain` なのでPVCが削除されてもPVは残る。  
-ただし、PVCを再作成しても同じPVは利用されない
+こちらは動的プロビジョニングと異なり、あらかじめPVをマニフェストで定義しておく  
+pvc, pvリソースを削除しても同じボリュームが割り当てられる
+
 
 ```bash
 $ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/static_provisioning.yaml
 
 # 一回削除
+# こちらのバグの問題でファイナライザを削除しないと消せない
+# https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/1207
 $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/static_provisioning.yaml
 
 # 再作成されると同じボリュームがマウントされている
