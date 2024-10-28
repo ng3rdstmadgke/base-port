@@ -22,6 +22,18 @@ gp2      kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   false   
 
 # 動作確認 (動的プロビジョニング)
 
+StorageClassの `parameters.basePath` `parameters.subPathPattern` `parameters.ensureUniqueDirectory` の設定で構成されるマウントポイントがPVCで一意になるならPVCを削除しても同じパスがマウントされる。
+
+- `parameters.basePath`  
+動的プロビジョニング作成されるアクセスポイントのパス
+- `parameters.subPathPattern`  
+動的プロビジョニングで作成される各アクセスポイントのサブパス
+- `parameters.ensureUniqueDirectory`  
+動的プロビジョニングで作成される各アクセスポイントのサブパスにUIDを追加する (重複回避)
+  - trueだとマウントパスは `/dynamic_provisioning/pvcネームスペース名/pvc名-f9ab375a-4da3-4c4a-a748-391a6da20a91` となる
+  - falseだとマウントパスは `/dynamic_provisioning/pvcネームスペース名/pvc名` となる
+
+
 ```bash
 # pvc, podの作成
 $ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/dynamic_provisioning.yaml
@@ -63,9 +75,6 @@ tmpfs           1.9G     0  1.9G   0% /sys/firmware
 $ exit
 ```
 
-k9sでpodを削除して再作成すると同じストレージをマウントできる。  
-※ PVCを消してしまうと同じストレージにマウントできない
-
 ```bash
 # k9sでpodを削除
 k9s
@@ -84,7 +93,8 @@ $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/dynamic_provisio
 # 動作確認 (静的プロビジョニング)
 
 こちらは動的プロビジョニングと異なり、あらかじめPVをマニフェストで定義しておく  
-pvc, pvリソースを削除しても同じボリュームが割り当てられる
+
+PersistentVolumeの `csi.volumeHandle` でマウントパスを指定することで、PV, PVCを削除しても同じディレクトリにマウントできる。(ただし、マウントパスはあらかじめ作成しておく必要がある)
 
 
 ```bash

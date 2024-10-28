@@ -24,9 +24,13 @@ spec:
   # Delete: ボリュームは削除される
   #persistentVolumeReclaimPolicy: Retain
   persistentVolumeReclaimPolicy: Delete
+  # https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/volume_path/specs/example.yaml#L21 
   csi:
     driver: efs.csi.aws.com
-    volumeHandle: fs-0b3a33fdd77d2f23c
+    # 静的プロビジョニングではマウントパスはPVで指定する
+    # 指定したディレクトリは自動で作成されないのであらかじめ作成しておく必要がある
+    volumeHandle: fs-0b3a33fdd77d2f23c:/
+    #volumeHandle: fs-0b3a33fdd77d2f23c:/static_provisioning
 ---
 # PVCはユーザーやアプリケーションが PV をリクエストするためのもの (PVを使うためのリクエスト)
 # 条件に合うPVを探してバインドする
