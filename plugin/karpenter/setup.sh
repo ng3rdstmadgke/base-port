@@ -57,10 +57,14 @@ CLUSTER_SERVICE_CIDR=$(terraform -chdir=${TERRAFORM_DIR}/cluster output -raw eks
 KARPENTER_NODE_ROLE_NAME=$(terraform -chdir=${TERRAFORM_DIR}/helm output -raw karpenter_node_role_name)
 
 
-#
-# AL2023, x86-64
+
+
+
+######################################################################################
+# EC2NodeClass: AL2023, x86-64
 #
 # NodeClasses | Karpenter: https://karpenter.sh/v0.37/concepts/nodeclasses/
+######################################################################################
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass-al2023-x86-64.yaml
 ---
 apiVersion: karpenter.k8s.aws/v1
@@ -168,12 +172,16 @@ spec:
     consolidateAfter: 1m
 EOF
 
-#
-# AL2, x86-64, NVIDIA
+
+
+
+
+######################################################################################
+# EC2NodeClass: AL2, x86-64, NVIDIA
 #
 # Amazon EKS 最適化高速 Amazon Linux AMI: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/eks-optimized-ami.html#gpu-ami
 # amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
-#
+######################################################################################
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass-al2-x86-64-nvidia.yaml
 ---
 apiVersion: karpenter.k8s.aws/v1
@@ -275,12 +283,18 @@ spec:
     consolidateAfter: 1m
 EOF
 
-#
-# bottlerocket, x86-64
+
+
+
+
+
+######################################################################################
+# EC2NodeClass: bottlerocket, x86-64
 #
 # NodeClasses | Karpenter: https://karpenter.sh/v0.37/concepts/nodeclasses/
 # bottlerocket | Github: https://github.com/bottlerocket-os/bottlerocket
 # bottlerocket Settings: https://bottlerocket.dev/en/os/1.20.x/api/settings-index/
+######################################################################################
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass-bottlerocket-x86-64.yaml
 ---
 apiVersion: karpenter.k8s.aws/v1
@@ -377,12 +391,17 @@ spec:
     consolidateAfter: 1m
 EOF
 
-#
-# bottlerocket, x86-64, NVIDIA
+
+
+
+
+######################################################################################
+# EC2NodeClass: bottlerocket, x86-64, NVIDIA
 #
 # NodeClasses | Karpenter: https://karpenter.sh/v0.37/concepts/nodeclasses/
 # bottlerocket | Github: https://github.com/bottlerocket-os/bottlerocket
 # bottlerocket Settings: https://bottlerocket.dev/en/os/1.20.x/api/settings-index/
+######################################################################################
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass-bottlerocket-x86-64-nvidia.yaml
 ---
 apiVersion: karpenter.k8s.aws/v1
@@ -485,12 +504,72 @@ spec:
     consolidateAfter: 1m
 EOF
 
-#
-# bottlerocket, aarch64, NVIDIA
+# NodePools | Karpenter: https://karpenter.sh/docs/concepts/nodepools/
+#   - instance-types | Karpenter: https://karpenter.sh/docs/reference/instance-types/#g6-family
+cat <<EOF > $SCRIPT_DIR/tmp/nodepool-bottlerocket-x86-64-nvidia-g6.yaml
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: bottlerocket-x86-64-nvidia-g6
+spec:
+  template:
+    metadata:
+      labels:
+        karpenter.baseport.net/nodeclass: bottlerocket-x86-64-nvidia-g6
+    spec:
+      terminationGracePeriod: 24h  # ノードが強制削除される前にdrainできる最大時間
+      expireAfter: 720h  # クラスタにノードが存在できる最長時間 (ノードの長期間の稼動による問題(メモリリークなど)のリスクを低減する)
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]  # spot or on-demand
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["g6"]
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values: ["4"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: bottlerocket-x86-64-nvidia
+      # nvidia-device-pluginデーモンセットを起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
+      # nvidia-device-pluginデーモンセットのtoleration: https://github.com/NVIDIA/k8s-device-plugin/blob/v0.16.2/deployments/helm/nvidia-device-plugin/values.yaml#L85
+      taints:
+        - key: nvidia.com/gpu
+          value: "true"
+          effect: "NoSchedule"
+  limits:
+    cpu: 20
+  disruption:
+    # 統合のために考慮すべきノードの種類
+    # WhenEmptyOrUnderutilized: すべてのノードを統合の対象とし、ノードが十分に活用されておらず、コスト削減のために変更できると判断した場合にノードを削除・置換しようとする
+    # WhenEmpty: ワークロードポッドを含まないノードのみを統合の対象とする
+    consolidationPolicy: WhenEmptyOrUnderutilized
+
+    # Podがノードに追加または削除された後、Karpenterがノードを統合するまでの待機時間。
+    consolidateAfter: 1m
+EOF
+
+
+
+
+
+
+######################################################################################
+# EC2NodeClass: bottlerocket, aarch64, NVIDIA
 #
 # NodeClasses | Karpenter: https://karpenter.sh/v0.37/concepts/nodeclasses/
 # bottlerocket | Github: https://github.com/bottlerocket-os/bottlerocket
 # bottlerocket Settings: https://bottlerocket.dev/en/os/1.20.x/api/settings-index/
+######################################################################################
 cat <<EOF > $SCRIPT_DIR/tmp/nodeclass-bottlerocket-aarch64-nvidia.yaml
 ---
 apiVersion: karpenter.k8s.aws/v1

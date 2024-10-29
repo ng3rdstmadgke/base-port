@@ -1,0 +1,36 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bottlerocket-x86-64-nvidia-g6-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bottlerocket-x86-64-nvidia-g6-test
+  template:
+    metadata:
+      labels:
+        app: bottlerocket-x86-64-nvidia-g6-test
+    spec:
+      containers:
+        - name: bottlerocket-x86-64-nvidia-g6-test
+          # https://hub.docker.com/r/nvidia/cuda/tags
+          image: ollama/ollama:0.3.14
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+      affinity:
+        # Node Affinityの例: https://cstoku.dev/posts/2018/k8sdojo-18/#node-affinity%E3%81%AE%E4%BE%8B
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "karpenter.sh/nodepool"
+                    operator: "In"
+                    values:
+                      - "bottlerocket-x86-64-nvidia-g6"
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
