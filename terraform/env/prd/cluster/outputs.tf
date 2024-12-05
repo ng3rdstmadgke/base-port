@@ -42,6 +42,10 @@ output "eks_cluster_sg_ids" {
   value = data.aws_eks_cluster.this.vpc_config[0].security_group_ids
 }
 
+output "eks_node_role_arn" {
+  value = module.eks.node_role_arn
+}
+
 
 
 data "aws_eks_cluster" "this" {

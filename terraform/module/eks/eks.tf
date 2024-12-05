@@ -39,7 +39,7 @@ module "vpc" {
  */
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.24.0"
+  version = "~> 20.31.0"
 
   cluster_name = local.cluster_name
   cluster_version = var.cluster_version
