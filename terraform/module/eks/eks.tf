@@ -80,6 +80,17 @@ module "eks" {
    *   - マネージドノードグループ内のEC2ノードに付与するSG
    */
   create_node_security_group    = false
+
+  /**
+   * クラスターロールに追加のポリシーをアタッチ
+   */
+  iam_role_additional_policies = {
+    "AmazonEKSBlockStoragePolicy" = "arn:aws:iam::aws:policy/AmazonEKSBlockStoragePolicy"
+    "AmazonEKSComputePolicy" = "arn:aws:iam::aws:policy/AmazonEKSComputePolicy"
+    "AmazonEKSLoadBalancingPolicy" = "arn:aws:iam::aws:policy/AmazonEKSLoadBalancingPolicy"
+    "AmazonEKSNetworkingPolicy" = "arn:aws:iam::aws:policy/AmazonEKSNetworkingPolicy"
+  }
+
 }
 
 /**
