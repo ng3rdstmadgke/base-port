@@ -223,7 +223,6 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
           "Effect": "Allow",
           "Resource": "*",
           "Action": [
-            "ec2:DescribeAvailabilityZones",
             "ec2:DescribeImages",
             "ec2:DescribeInstances",
             "ec2:DescribeInstanceTypeOfferings",
@@ -268,7 +267,10 @@ resource "aws_iam_policy" "karpenter_controller_policy" {
           "Action": "iam:PassRole",
           "Condition": {
             "StringEquals": {
-              "iam:PassedToService": "ec2.amazonaws.com"
+              "iam:PassedToService": [
+                "ec2.amazonaws.com",
+                "ec2.amazonaws.com.cn",
+              ]
             }
           }
         },
@@ -551,7 +553,7 @@ resource "aws_cloudwatch_event_target" "instance_state_change_rule" {
  *
  * 参考
  *   - リポジトリ | AWS: https://gallery.ecr.aws/karpenter/karpenter
- *   - karpenter-provider-aws | GitHub: https://github.com/aws/karpenter-provider-aws/tree/v0.37.0
+ *   - karpenter-provider-aws | GitHub: https://github.com/aws/karpenter-provider-aws/tree/v1.1.0
  */
 
 //helm_release - helm - terraform: https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release
@@ -559,7 +561,7 @@ resource "helm_release" "karpenter" {
   name       = "karpenter"
   #repository = "xxxxxxxxxxxxxxxxxxxxx"
   chart      = "oci://public.ecr.aws/karpenter/karpenter"
-  version    = "1.0.1"
+  version    = "1.1.0"
   namespace  = local.namespace
   create_namespace = true
 
