@@ -91,6 +91,12 @@ module "eks" {
     "AmazonEKSNetworkingPolicy" = "arn:aws:iam::aws:policy/AmazonEKSNetworkingPolicy"
   }
 
+  // EKS Auto Mode
+  //cluster_compute_config = {
+  //  enabled    = true
+  //  node_pools = []
+  //}
+
 }
 
 /**
