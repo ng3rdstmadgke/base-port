@@ -38,6 +38,10 @@ data "aws_eks_cluster" "this" {
   name = local.cluster_name
 }
 
+output "automode_node_role" {
+  value = module.eks_auto_mode.automode_node_role.name
+}
+
 /**
  * アドオン
  *
@@ -133,4 +137,10 @@ resource "aws_eks_addon" "snapshot_controller" {
   addon_name    = "snapshot-controller"
   // バージョンの確認: aws eks describe-addon-versions --addon-name aws-ebs-csi-driver
   addon_version = "v8.1.0-eksbuild.2"
+}
+
+module eks_auto_mode {
+  source = "../../../module/eks-auto-mode"
+  app_name = local.app_name
+  stage = local.stage
 }

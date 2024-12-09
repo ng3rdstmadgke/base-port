@@ -1,0 +1,27 @@
+---
+# https://docs.aws.amazon.com/eks/latest/userguide/create-node-class.html
+apiVersion: eks.amazonaws.com/v1
+kind: NodeClass
+metadata:
+  name: standard
+spec:
+  role: "baseport-prd-AmazonEKSAutoNodeRole" # replace with your cluster name
+  # Required: Subnet selection for node placement
+  subnetSelectorTerms:
+    - tags:
+        automode.prd.baseport.net/discovery: "baseport-prd"
+    # Alternative using direct subnet ID
+    # - id: "subnet-0123456789abcdef0"
+
+  # Required: Security group selection for nodes
+  securityGroupSelectorTerms:
+    - tags:
+        automode.prd.baseport.net/discovery: "baseport-prd"
+    - id: "sg-0123456789abcdef0"
+    # Alternative approaches:
+    # - id: "sg-0123456789abcdef0"
+    # - name: "eks-cluster-node-security-group"
+  ephemeralStorage:
+    size: "64Gi"
+    iops: 3000      # Range: 3000-16000
+    throughput: 125 # Range: 125-1000

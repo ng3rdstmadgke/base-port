@@ -1,0 +1,40 @@
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: automode-standard
+spec:
+  template:
+    metadata:
+      labels:
+        automode.prd.baseport.net/nodeclass: "standard"
+    spec:
+      terminationGracePeriod: 24h  # ノードが強制削除される前にdrainできる最大時間
+      expireAfter: 168h  # クラスタにノードが存在できる最長時間 (ノードの長期間の稼動による問題(メモリリークなど)のリスクを低減する)
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]  # spot or on-demand
+        - key: eks.amazonaws.com/instance-family
+          operator: In
+          values: ["t3", "t3a", "m5", "m5a", "m6i", "m6a", "m7i", "m7a"]
+        - key: "eks.amazonaws.com/instance-cpu"
+          operator: In
+          values: ["2", "4"]
+      nodeClassRef:
+        group: eks.amazonaws.com
+        kind: NodeClass
+        name: standard
+  limits:
+    cpu: 20
+  disruption:
+    # 統合のために考慮すべきノードの種類
+    # WhenEmptyOrUnderutilized: すべてのノードを統合の対象とし、ノードが十分に活用されておらず、コスト削減のために変更できると判断した場合にノードを削除・置換しようとする
+    # WhenEmpty: ワークロードポッドを含まないノードのみを統合の対象とする
+    consolidationPolicy: WhenEmptyOrUnderutilized
+
+    # Podがノードに追加または削除された後、Karpenterがノードを統合するまでの待機時間。
+    consolidateAfter: 1m

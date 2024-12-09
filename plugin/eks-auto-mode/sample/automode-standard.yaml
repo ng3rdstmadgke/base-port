@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: automode-standard-test
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: automode-standard-test
+  template:
+    metadata:
+      labels:
+        app: automode-standard-test
+    spec:
+      containers:
+        - name: automode-standard-test
+          image: public.ecr.aws/eks-distro/kubernetes/pause:3.7
+          resources:
+            requests:
+              cpu: 1
+      affinity:
+        # Node Affinityの例: https://cstoku.dev/posts/2018/k8sdojo-18/#node-affinity%E3%81%AE%E4%BE%8B
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "karpenter.sh/nodepool"
+                    operator: "In"
+                    values:
+                      - "automode-standard"
