@@ -27,8 +27,8 @@ module "vpc" {
   // プライベートネットを内部LB用に利用することをKubernetesとALBが認識できるようにするためのタグ
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = "1",
-    "karpenter.sh/discovery" = local.cluster_name  # karpenterでノードを立てるサブネットを指定するためのタグ
-
+    "karpenter.sh/discovery" = local.cluster_name, # karpenterでノードを立てるサブネットを指定するためのタグ
+    "automode.prd.baseport.net/discovery" = local.cluster_name  # EKS Auto Modeでノードを立てるサブネットを指定するためのタグ
   }
 }
 
@@ -96,7 +96,6 @@ module "eks" {
   //  enabled    = true
   //  node_pools = []
   //}
-
 }
 
 /**
