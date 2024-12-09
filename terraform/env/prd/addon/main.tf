@@ -47,7 +47,7 @@ data "aws_eks_cluster" "this" {
 resource "aws_eks_addon" "coredns" {
   cluster_name  = data.aws_eks_cluster.this.id
   addon_name    = "coredns"
-  addon_version = "v1.11.1-eksbuild.8"
+  addon_version = "v1.11.3-eksbuild.2"
   #configuration_values = jsonencode({
   #  computeType = "fargate"
   #})

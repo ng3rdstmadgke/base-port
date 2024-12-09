@@ -1,5 +1,5 @@
 terraform {
-  required_version = "~> 1.8.5"
+  required_version = "~> 1.9.8"
 
   backend "s3" {
     bucket = "tfstate-store-a5gnpkub"

@@ -38,7 +38,7 @@ resource "aws_iam_policy" "s3_csi_driver_policy" {
           "s3:ListBucket"
         ],
         "Resource": [
-          "*"
+          "arn:aws:s3:::baseport-*"
         ]
       },
       {
@@ -51,7 +51,7 @@ resource "aws_iam_policy" "s3_csi_driver_policy" {
           "s3:DeleteObject"
         ],
         "Resource": [
-          "*"
+          "arn:aws:s3:::baseport-*/*"
         ]
       },
       {
@@ -74,6 +74,6 @@ resource "aws_iam_role_policy_attachment" "s3_csi_driver" {
 resource "aws_eks_addon" "aws_mountpoint_s3_csi_driver" {
   cluster_name  = local.cluster_name
   addon_name   = "aws-mountpoint-s3-csi-driver"
-  addon_version = "v1.9.0-eksbuild.1"
+  addon_version = "v1.10.0-eksbuild.1"
   service_account_role_arn = aws_iam_role.s3_csi_driver_role.arn
 }
