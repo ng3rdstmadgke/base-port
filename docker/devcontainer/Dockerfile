@@ -58,7 +58,7 @@ RUN curl --silent --location "https://github.com/weaveworks/eksctl/releases/late
 RUN wget https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip && \
     unzip terraform_1.9.8_linux_amd64.zip && \
     mv terraform /usr/local/bin/ && \
-    terraform -install-autocomplete 
+    terraform -install-autocomplete
 
 # Kustomizeのインストール
 # https://kubectl.docs.kubernetes.io/installation/kustomize/binaries/
@@ -66,7 +66,6 @@ RUN curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/
     mv kustomize /usr/local/bin/
 
 # helmインストール
-# https://releases.hashicorp.com/terraform/1.8.5/terraform_1.8.5_linux_amd64.zip
 RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 # helmのリポジトリにeks, kedaを追加
