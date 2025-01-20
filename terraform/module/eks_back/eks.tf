@@ -96,6 +96,7 @@ module "eks" {
   //  enabled    = true
   //  node_pools = []
   //}
+
 }
 
 /**

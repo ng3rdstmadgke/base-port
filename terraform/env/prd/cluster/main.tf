@@ -12,7 +12,7 @@ terraform {
     // AWS Provider: https://registry.terraform.io/providers/hashicorp/aws/latest/docs
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.80.0"
+      version = "~> 5.84.0"
     }
   }
 }

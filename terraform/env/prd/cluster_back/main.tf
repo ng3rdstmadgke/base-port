@@ -12,7 +12,7 @@ terraform {
     // AWS Provider: https://registry.terraform.io/providers/hashicorp/aws/latest/docs
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.80.0"
+      version = "~> 5.84.0"
     }
   }
 }
@@ -27,7 +27,7 @@ provider "aws" {
 }
 
 module eks {
-  source = "../../../module/eks"
+  source = "../../../module/eks_back"
   app_name = local.app_name
   stage = local.stage
   // ALBにアクセスする際のIPアドレス
