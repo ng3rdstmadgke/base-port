@@ -1,5 +1,5 @@
 output cluster {
-  value = module.eks
+  value = aws_eks_cluster.this
 }
 
 output vpc {
