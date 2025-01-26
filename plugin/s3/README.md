@@ -20,9 +20,9 @@
 ## アドオンのインストールとIRSA作成
 
 ```bash
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/helm init
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/helm plan
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/helm apply -auto-approve
+terraform -chdir=${PROJECT_DIR}/terraform/env/prd/helm init
+terraform -chdir=${PROJECT_DIR}/terraform/env/prd/helm plan
+terraform -chdir=${PROJECT_DIR}/terraform/env/prd/helm apply -auto-approve
 ```
 
 # サンプルリソースデプロイ
@@ -32,7 +32,7 @@ terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/helm apply -auto-ap
 
 
 ```bash
-kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/s3/sample/static_provisioning.yaml
+kubectl apply -f ${PROJECT_DIR}/plugin/s3/sample/static_provisioning.yaml
 
 # podにログインして /dataにファイルが作成されていればOK
 ls /data
@@ -41,5 +41,5 @@ ls /data
 削除
 
 ```bash
-kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/s3/sample/static_provisioning.yaml
+kubectl delete -f ${PROJECT_DIR}/plugin/s3/sample/static_provisioning.yaml
 ```

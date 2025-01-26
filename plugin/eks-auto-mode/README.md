@@ -11,21 +11,21 @@
 - AmazonEKSClusterPolicy
 
 ```bash
-terraform -chdir=$CONTAINER_PROJECT_ROOT/terraform/env/prd/eks init
-terraform -chdir=$CONTAINER_PROJECT_ROOT/terraform/env/prd/eks plan
-terraform -chdir=$CONTAINER_PROJECT_ROOT/terraform/env/prd/eks apply -auto-approve
+terraform -chdir=$PROJECT_DIR/terraform/env/prd/eks init
+terraform -chdir=$PROJECT_DIR/terraform/env/prd/eks plan
+terraform -chdir=$PROJECT_DIR/terraform/env/prd/eks apply -auto-approve
 ```
 
 # ノードロールの作成
 [Create an EKS Auto Mode Node IAM Role | AWS](https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html#_create_an_eks_auto_mode_node_iam_role)
 
 ```bash
-terraform -chdir=$CONTAINER_PROJECT_ROOT/terraform/env/prd/addon init
-terraform -chdir=$CONTAINER_PROJECT_ROOT/terraform/env/prd/addon plan
-terraform -chdir=$CONTAINER_PROJECT_ROOT/terraform/env/prd/addon apply -auto-approve
+terraform -chdir=$PROJECT_DIR/terraform/env/prd/addon init
+terraform -chdir=$PROJECT_DIR/terraform/env/prd/addon plan
+terraform -chdir=$PROJECT_DIR/terraform/env/prd/addon apply -auto-approve
 
 # ノードロールの名前を確認
-terraform -chdir=$CONTAINER_PROJECT_ROOT/terraform/env/prd/addon output automode_node_role
+terraform -chdir=$PROJECT_DIR/terraform/env/prd/addon output automode_node_role
 ```
 
 
@@ -33,7 +33,7 @@ terraform -chdir=$CONTAINER_PROJECT_ROOT/terraform/env/prd/addon output automode
 
 ```bash
 STAGE_NAME="prd"
-TERRAFORM_DIR="${CONTAINER_PROJECT_ROOT}/terraform/env/$STAGE_NAME"
+TERRAFORM_DIR="${PROJECT_DIR}/terraform/env/$STAGE_NAME"
 CLUSTER_NAME=$( terraform -chdir=$TERRAFORM_DIR/cluster output -raw eks_cluster_name)
 
 #

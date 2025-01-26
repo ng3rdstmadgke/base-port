@@ -2,8 +2,8 @@
 
 alias ll="ls -alF"
 
-if [ -f "${CONTAINER_PROJECT_ROOT}/.devcontainer/.env" ]; then
-  export $(cat "${CONTAINER_PROJECT_ROOT}/.devcontainer/.env" | grep -v -e "^ *#" | xargs)
+if [ -f "${PROJECT_DIR}/.devcontainer/.env" ]; then
+  export $(cat "${PROJECT_DIR}/.devcontainer/.env" | grep -v -e "^ *#" | xargs)
 fi
 
 STS_GET_CALLER_IDENTITY=$(aws sts get-caller-identity)

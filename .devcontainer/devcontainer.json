@@ -50,10 +50,10 @@
   "containerEnv": {
     // ホスト側のプロジェクトディレクトリ
     // https://zenn.dev/arkbig/articles/devcontainer_8d4f6fd4ade4efa79e0277fef1ad06470ae68#variables-in-devcontainer.json
-    "HOST_PROJECT_ROOT": "${localWorkspaceFolder}",
+    "HOST_DIR": "${localWorkspaceFolder}",
     // コンテナ側のプロジェクトディレクトリ
     // https://zenn.dev/arkbig/articles/devcontainer_8d4f6fd4ade4efa79e0277fef1ad06470ae68#variables-in-devcontainer.json
-    "CONTAINER_PROJECT_ROOT": "${containerWorkspaceFolder}"
+    "PROJECT_DIR": "${containerWorkspaceFolder}"
   },
 
   // devcontainerに追加する機能の定義

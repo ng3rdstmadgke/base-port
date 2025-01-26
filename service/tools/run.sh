@@ -6,11 +6,11 @@ if [ -z "${NAMESPACE}" ]; then
   exit 1
 fi
 
-REMOTE_IMAGE="$(terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd output -raw tools_ecr)"
-ROLE_ARN="$(terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd output -raw tools_role)"
+REMOTE_IMAGE="$(terraform -chdir=${PROJECT_DIR}/terraform/env/helm/prd output -raw tools_ecr)"
+ROLE_ARN="$(terraform -chdir=${PROJECT_DIR}/terraform/env/helm/prd output -raw tools_role)"
 
-mkdir -p ${CONTAINER_PROJECT_ROOT}/service/tools/tmp
-cat <<EOF > ${CONTAINER_PROJECT_ROOT}/service/tools/tmp/app.yaml
+mkdir -p ${PROJECT_DIR}/service/tools/tmp
+cat <<EOF > ${PROJECT_DIR}/service/tools/tmp/app.yaml
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -36,6 +36,6 @@ spec:
     command: ["sleep", "infinity"]
 EOF
 
-kubectl apply -f ${CONTAINER_PROJECT_ROOT}/service/tools/tmp/app.yaml
+kubectl apply -f ${PROJECT_DIR}/service/tools/tmp/app.yaml
 kubectl wait --for=condition=Ready -n ${NAMESPACE} pod/tools
 kubectl exec -it -n ${NAMESPACE} tools -- /bin/bash

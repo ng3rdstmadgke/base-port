@@ -3,7 +3,7 @@
 Secretsとマニフェストの生成
 
 ```bash
-$ ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/setup.sh
+$ ${PROJECT_DIR}/plugin/secrets-manager/sample/setup.sh
 ```
 
 ## 1. シークレットファイルをマウントする方式
@@ -11,7 +11,7 @@ $ ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/setup.sh
 SecretProviderClassの作成
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_1.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_1.yaml
 
 # 確認
 $ kubectl get secretproviderclass
@@ -23,7 +23,7 @@ Deploymentの作成
 
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_1.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_1.yaml
 ```
 
 確認
@@ -37,8 +37,8 @@ $ cat /mnt/secrets-store/_baseport_prd_ascp-test
 削除
 
 ```bash
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_1.yaml
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_1.yaml
+$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_1.yaml
+$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_1.yaml
 ```
 
 ## 2. Podの環境変数にアサインする方式
@@ -46,7 +46,7 @@ $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/
 SecretProviderClassの作成
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_2.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_2.yaml
 
 # 確認
 $ kubectl get secretproviderclass
@@ -58,7 +58,7 @@ Deploymentの作成
 
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
 
 # ボリュームのマウント状態の確認
 $ kubectl get secretproviderclasspodstatus
@@ -81,8 +81,8 @@ $ echo $DB_SECRET
 削除
 
 ```bash
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_2.yaml
+$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
+$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_2.yaml
 ```
 
 ## 3. JSONをパースしてPodの環境変数にアサインする方式
@@ -90,7 +90,7 @@ $ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/
 SecretProviderClassの作成
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_3.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_3.yaml
 
 # 確認
 $ kubectl get secretproviderclass
@@ -102,7 +102,7 @@ Deploymentの作成
 
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_3.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_3.yaml
 
 # ボリュームのマウント状態の確認
 $ kubectl get secretproviderclasspodstatus
@@ -127,6 +127,6 @@ piyopiyo
 削除
 
 ```bash
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/deployment_3.yaml
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/secrets-manager/sample/tmp/spc_3.yaml
+$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_3.yaml
+$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_3.yaml
 ```

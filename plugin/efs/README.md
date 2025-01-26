@@ -6,11 +6,11 @@
 # デプロイ
 
 ```bash
-# ${CONTAINER_PROJECT_ROOT}/plugin/efs/tmp/sc.yaml の作成
-${CONTAINER_PROJECT_ROOT}/plugin/efs/setup.sh
+# ${PROJECT_DIR}/plugin/efs/tmp/sc.yaml の作成
+${PROJECT_DIR}/plugin/efs/setup.sh
 
 # StorageClass作成
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/tmp/sc.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/efs/tmp/sc.yaml
 storageclass.storage.k8s.io/efs-sc created
 
 # 確認
@@ -36,7 +36,7 @@ StorageClassの `parameters.basePath` `parameters.subPathPattern` `parameters.en
 
 ```bash
 # pvc, podの作成
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/dynamic_provisioning.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/efs/sample/dynamic_provisioning.yaml
 
 # pvcの確認
 $ kubectl get pvc
@@ -81,13 +81,13 @@ k9s
 
 
 # 再デプロイ
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/dynamic_provisioning.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/efs/sample/dynamic_provisioning.yaml
 ```
 
 リソースの削除
 
 ```bash
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/dynamic_provisioning.yaml
+$ kubectl delete -f ${PROJECT_DIR}/plugin/efs/sample/dynamic_provisioning.yaml
 ```
 
 # 動作確認 (静的プロビジョニング)
@@ -98,15 +98,15 @@ PersistentVolumeの `csi.volumeHandle` でマウントパスを指定するこ�
 
 
 ```bash
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/static_provisioning.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/efs/sample/static_provisioning.yaml
 
 # 一回削除
 # こちらのバグの問題でファイナライザを削除しないと消せない
 # https://github.com/kubernetes-sigs/aws-efs-csi-driver/issues/1207
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/static_provisioning.yaml
+$ kubectl delete -f ${PROJECT_DIR}/plugin/efs/sample/static_provisioning.yaml
 
 # 再作成されると同じボリュームがマウントされている
-$ kubectl apply -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sample/static_provisioning.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/efs/sample/static_provisioning.yaml
 ```
 
 
@@ -125,5 +125,5 @@ $ kubectl describe sc efs-sc
 # 削除
 
 ```bash
-$ kubectl delete -f ${CONTAINER_PROJECT_ROOT}/plugin/efs/sc.yaml
+$ kubectl delete -f ${PROJECT_DIR}/plugin/efs/sc.yaml
 ```

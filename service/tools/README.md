@@ -2,33 +2,33 @@
 ## ECR・ロールの作成
 
 ```bash
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd init
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd plan
-terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd apply -auto-approve
+terraform -chdir=${PROJECT_DIR}/terraform/env/helm/prd init
+terraform -chdir=${PROJECT_DIR}/terraform/env/helm/prd plan
+terraform -chdir=${PROJECT_DIR}/terraform/env/helm/prd apply -auto-approve
 ```
 
 ## イメージbuild・push
 
 ```bash
-${CONTAINER_PROJECT_ROOT}/service/tools/build.sh --push
+${PROJECT_DIR}/service/tools/build.sh --push
 ```
 
 ## ログイン
 
 ```bash
-${CONTAINER_PROJECT_ROOT}/service/tools/run.sh
+${PROJECT_DIR}/service/tools/run.sh
 ```
 
 ## 削除
 
 ```bash
-${CONTAINER_PROJECT_ROOT}/service/tools/delete.sh
+${PROJECT_DIR}/service/tools/delete.sh
 ```
 
 ## 再起動
 
 ```bash
-${CONTAINER_PROJECT_ROOT}/service/tools/delete.sh && ${CONTAINER_PROJECT_ROOT}/service/tools/run.sh
+${PROJECT_DIR}/service/tools/delete.sh && ${PROJECT_DIR}/service/tools/run.sh
 ```
 
 

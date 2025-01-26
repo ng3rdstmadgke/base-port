@@ -5,7 +5,7 @@ SCRIPT_DIR=$(cd $(dirname $0); pwd)
 cd $SCRIPT_DIR
 
 STAGE_NAME="prd"
-TERRAFORM_DIR="${CONTAINER_PROJECT_ROOT}/terraform/env/$STAGE_NAME"
+TERRAFORM_DIR="${PROJECT_DIR}/terraform/env/$STAGE_NAME"
 CLUSTER_NAME=$( terraform -chdir=$TERRAFORM_DIR/cluster output -raw eks_cluster_name)
 
 #

@@ -13,7 +13,7 @@ metadata:
   name: keycloak
   namespace: keycloak
   annotations:
-    # terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/service/prd output keycloak_ascp_role
+    # terraform -chdir=${PROJECT_DIR}/terraform/env/service/prd output keycloak_ascp_role
     eks.amazonaws.com/role-arn: arn:aws:iam::674582907715:role/baseport-prd-keycloak-ASCPRole
 ---
 #

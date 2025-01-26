@@ -4,7 +4,7 @@ set -ex
 SCRIPT_DIR=$(cd $(dirname $0); pwd)
 cd $SCRIPT_DIR
 
-EFS_ID="$(terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/prd/cluster output -raw efs_id)"
+EFS_ID="$(terraform -chdir=${PROJECT_DIR}/terraform/env/prd/cluster output -raw efs_id)"
 mkdir -p $SCRIPT_DIR/tmp
 
 # Amazon EFS CSI dynamic provisioningの御紹介 | Amazon Web Services ブログ

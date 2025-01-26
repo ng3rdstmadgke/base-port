@@ -44,7 +44,7 @@ done
 
 set -e
 
-cd "${CONTAINER_PROJECT_ROOT}"
+cd "${PROJECT_DIR}"
 
 # AWSアカウントIDの取得
 AWS_ACCOUNT_ID=$(aws $AWS_PROFILE_OPTION sts get-caller-identity --query 'Account' --output text)
@@ -53,7 +53,7 @@ echo "AWS_ACCOUNT_ID: $AWS_ACCOUNT_ID"
 #############################
 # イメージのbuild
 #############################
-REMOTE_IMAGE="$(terraform -chdir=${CONTAINER_PROJECT_ROOT}/terraform/env/helm/prd output -raw tools_ecr)"
+REMOTE_IMAGE="$(terraform -chdir=${PROJECT_DIR}/terraform/env/helm/prd output -raw tools_ecr)"
 VERSION=$(date +"%Y%m%d.%H%M")
 
 # app
