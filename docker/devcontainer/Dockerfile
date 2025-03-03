@@ -55,7 +55,7 @@ RUN curl --silent --location "https://github.com/weaveworks/eksctl/releases/late
     mv /tmp/eksctl /usr/local/bin
 
 # https://developer.hashicorp.com/terraform/install
-ENV TERRAFORM_VERSION=1.9.8
+ENV TERRAFORM_VERSION=1.10.3
 RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     mv terraform /usr/local/bin/ && \
