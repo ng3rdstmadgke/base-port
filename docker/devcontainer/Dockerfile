@@ -55,8 +55,9 @@ RUN curl --silent --location "https://github.com/weaveworks/eksctl/releases/late
     mv /tmp/eksctl /usr/local/bin
 
 # https://developer.hashicorp.com/terraform/install
-RUN wget https://releases.hashicorp.com/terraform/1.9.8/terraform_1.9.8_linux_amd64.zip && \
-    unzip terraform_1.9.8_linux_amd64.zip && \
+ENV TERRAFORM_VERSION=1.9.8
+RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
+    unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip && \
     mv terraform /usr/local/bin/ && \
     terraform -install-autocomplete
 
