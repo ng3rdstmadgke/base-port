@@ -1,7 +1,9 @@
 SCRIPT_DIR := $(shell cd $(dir $(abspath $(lastword $(MAKEFILE_LIST)))) && pwd)
-PROJECT_NAME := baseport
+APP_NAME := baseport
 STAGE ?=
 COMPONENT ?=
+ADDR ?=
+ID ?=
 COMMON_BACKEND_CONFIG := $(SCRIPT_DIR)/terraform/components/tfvars/backend.tfvars
 COMMON_TFVARS := $(SCRIPT_DIR)/terraform/components/tfvars/common.tfvars
 COMPONENT_DIR := $(SCRIPT_DIR)/terraform/components/$(COMPONENT)
@@ -25,7 +27,7 @@ tf-init: option-parser ## terraform init
 	  -upgrade \
 	  -reconfigure \
 	  -backend-config $(COMMON_BACKEND_CONFIG) \
-	  -backend-config "key=$(PROJECT_NAME)/$(STAGE)/$(COMPONENT)/terraform.tfstate"
+	  -backend-config "key=$(APP_NAME)/$(STAGE)/$(COMPONENT)/terraform.tfstate"
 
 .PHONY: tf-validate 
 tf-validate: tf-init  ## terraform validate
@@ -35,6 +37,7 @@ tf-validate: tf-init  ## terraform validate
 tf-plan: tf-validate ## terraform plan
 	mkdir -p $(TFPLAN_DIR)
 	terraform -chdir=$(COMPONENT_DIR) plan \
+	  -var "app_name=$(APP_NAME)" \
 	  -var "stage=$(STAGE)" \
 	  -var-file=$(COMMON_TFVARS) \
 	  -var-file=$(COMPONENT_TFVARS) \
@@ -44,6 +47,7 @@ tf-plan: tf-validate ## terraform plan
 .PHONY: tf-apply
 tf-apply: tf-validate ## terraform apply
 	terraform -chdir=$(COMPONENT_DIR) apply \
+	  -var "app_name=$(APP_NAME)" \
 	  -var "stage=$(STAGE)" \
 	  -var-file=$(COMMON_TFVARS) \
 	  -var-file $(COMPONENT_TFVARS) \
@@ -56,10 +60,29 @@ tf-output: tf-validate ## terraform apply
 .PHONY: tf-destroy
 tf-destroy: tf-validate ## terraform destroy
 	terraform -chdir=$(COMPONENT_DIR) destroy \
+	  -var "app_name=$(APP_NAME)" \
 	  -var "stage=$(STAGE)" \
 	  -var-file=$(COMMON_TFVARS) \
 	  -var-file $(COMPONENT_TFVARS) \
 	  --auto-approve
+
+.PHONY: tf-import
+tf-import: tf-validate ## terraform destroy
+	@if [ -z "$(ADDR)" ]; then \
+	  echo "[Err] ADDR is required"; \
+	  exit 1; \
+	fi
+	@if [ -z "$(ID)" ]; then \
+	  echo "[Err] ID is required"; \
+	  exit 1; \
+	fi
+	terraform -chdir=$(COMPONENT_DIR) import \
+	  -var "app_name=$(APP_NAME)" \
+	  -var "stage=$(STAGE)" \
+	  -var-file $(COMMON_TFVARS) \
+	  -var-file $(COMPONENT_TFVARS) \
+		'$(ADDR)' \
+		'$(ID)'
 
 .PHONY: help
 .DEFAULT_GOAL := help

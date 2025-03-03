@@ -27,6 +27,11 @@ locals {
   app_name = "baseport"
 }
 
+variable app_name {
+  type = string
+  description = "アプリケーション名"
+}
+
 variable stage {
   type = string
   description = "ステージ名"
@@ -42,10 +47,6 @@ variable tfstate_bucket {
   description = "tfstateが保存されているS3バケット"
 }
 
-
-output "app_name" {
-  value = local.app_name
-}
 
 output "cluster_name" {
   value = "${local.app_name}-${var.stage}"
