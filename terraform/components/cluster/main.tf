@@ -28,7 +28,7 @@ provider "aws" {
 
 
 module eks {
-  source = "../../../module/eks"
+  source = "../../module/eks"
   app_name = local.app_name
   stage = local.stage
   private_subnet_ids = var.private_subnet_ids
@@ -37,7 +37,7 @@ module eks {
 }
 
 module efs {
-  source = "../../../module/efs"
+  source = "../../module/efs"
   app_name = local.app_name
   stage = local.stage
   vpc_id = var.vpc_id
