@@ -5,18 +5,18 @@ kind: NodeClass
 metadata:
   name: standard
 spec:
-  role: "baseport-prd-AmazonEKSAutoModeNodeRole"
+  role: "${automode_node_role_name}"
   # Required: Subnet selection for node placement
   subnetSelectorTerms:
     - tags:
-        automode.prd.baseport.net/discovery: "baseport-prd"
+        automode.prd.baseport.net/discovery: "${cluster_name}"
     # Alternative using direct subnet ID
     # - id: "subnet-0123456789abcdef0"
 
   # Required: Security group selection for nodes
   securityGroupSelectorTerms:
     - tags:
-        automode.prd.baseport.net/discovery: "baseport-prd"
+        automode.prd.baseport.net/discovery: "${cluster_name}"
     # Alternative approaches:
     # - id: "sg-0123456789abcdef0"
     # - name: "eks-cluster-node-security-group"

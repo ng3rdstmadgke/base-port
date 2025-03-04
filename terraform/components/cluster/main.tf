@@ -27,6 +27,7 @@ module eks {
   source = "../../module/eks"
   app_name = var.app_name
   stage = var.stage
+  project_dir = local.project_dir
   private_subnet_ids = local.private_subnet_ids
   cluster_version = "1.31"
   access_entries = var.access_entries
