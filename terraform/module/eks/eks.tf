@@ -193,7 +193,7 @@ resource "aws_eks_cluster" "this" {
   }
 
   compute_config {
-    enabled       = true
+    enabled       = false
     node_pools = []
   }
 
@@ -202,13 +202,13 @@ resource "aws_eks_cluster" "this" {
     service_ipv4_cidr = "172.20.0.0/16"
 
     elastic_load_balancing {
-      enabled = true
+      enabled = false
     }
   }
 
   storage_config {
     block_storage {
-      enabled = true
+      enabled = false
     }
   }
 
