@@ -1,11 +1,7 @@
 variable "app_name" {}
 variable "stage" {}
 variable "cluster_version" {}
-variable "vpc_cidr" {}
-variable "private_subnets" {
-  type = list(string)
-}
-variable "public_subnets" {
+variable "private_subnet_ids" {
   type = list(string)
 }
 

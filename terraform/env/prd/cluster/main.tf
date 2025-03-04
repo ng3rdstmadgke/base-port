@@ -26,22 +26,12 @@ provider "aws" {
   }
 }
 
+
 module eks {
   source = "../../../module/eks"
   app_name = local.app_name
   stage = local.stage
-  // ALBにアクセスする際のIPアドレス
-  vpc_cidr = "10.32.0.0/16"
-  private_subnets = [
-    "10.32.1.0/24",
-    "10.32.2.0/24",
-    "10.32.3.0/24",
-  ]
-  public_subnets = [
-    "10.32.101.0/24",
-    "10.32.102.0/24",
-    "10.32.103.0/24"
-  ]
+  private_subnet_ids = var.private_subnet_ids
   cluster_version = "1.31"
   access_entries = var.access_entries
 }
@@ -50,7 +40,7 @@ module efs {
   source = "../../../module/efs"
   app_name = local.app_name
   stage = local.stage
-  vpc_id = module.eks.vpc.vpc_id
-  private_subnets = module.eks.vpc.private_subnets
+  vpc_id = var.vpc_id
+  private_subnets = var.private_subnet_ids
   eks_cluster_sg_id = module.eks.cluster.vpc_config[0].cluster_security_group_id
 }

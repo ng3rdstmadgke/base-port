@@ -189,7 +189,7 @@ resource "aws_eks_cluster" "this" {
     security_group_ids = [
     ]
     // ワーカーノードが配置されるサブネット (コントロールプレーンとの通信のため、cross-account ENIが作成される)
-    subnet_ids = module.vpc.private_subnets
+    subnet_ids = var.private_subnet_ids
   }
 
   compute_config {
