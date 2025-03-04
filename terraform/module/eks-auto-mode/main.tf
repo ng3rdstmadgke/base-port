@@ -1,7 +1,6 @@
 // https://docs.aws.amazon.com/eks/latest/userguide/automode-get-started-cli.html#_create_an_eks_auto_mode_node_iam_role
-
 /**
- * KarpenterでプロビジョニングされるNodeに付与するロール
+ * EKS AutoModeでプロビジョニングされるNodeに付与するロール
  */
 resource "aws_iam_role" "automode_node_role" {
   name = "${var.app_name}-${var.stage}-AmazonEKSAutoNodeRole"
