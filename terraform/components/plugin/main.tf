@@ -2,12 +2,6 @@ terraform {
   required_version = "~> 1.10.3"
 
   backend "s3" {
-    bucket = "tfstate-store-a5gnpkub"
-    key    = "baseport/prd/plugin/terraform.tfstate"
-    #bucket = "kubernetes-work-tfstate"
-    #key    = "eks-work-iac/prd/helm/terraform.tfstate"
-    region = "ap-northeast-1"
-    encrypt = true
   }
 
   required_providers {
@@ -38,123 +32,112 @@ provider "aws" {
   }
 }
 
-// Data Source: aws_eks_cluster
-// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster
-data "aws_eks_cluster" "this" {
-  name = local.cluster_name
-}
-
-// Data Source: aws_eks_cluster_auth
-// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth
-data "aws_eks_cluster_auth" "this" {
-  name = local.cluster_name
-}
 
 // Kubernetes Provider: https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs
 provider "kubernetes" {
   // kubenetesAPIのホスト名(URL形式)。KUBE_HOST環境変数で指定している値に基づく。
-  host                   = data.aws_eks_cluster.this.endpoint
+  host                   = local.cluster_endpoint
   // TLS認証用のPEMエンコードされたルート証明書のバンドル
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.this.token
+  cluster_ca_certificate = base64decode(local.cluster_certificate_authority_data)
+  token                  = local.cluster_auth_token
 }
 
 // Helm Provider: https://registry.terraform.io/providers/hashicorp/helm/latest/docs
 provider "helm" {
   kubernetes {
-    host                   = data.aws_eks_cluster.this.endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.this.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.this.token
+    host                   = local.cluster_endpoint
+    cluster_ca_certificate = base64decode(local.cluster_certificate_authority_data)
+    token                  = local.cluster_auth_token
   }
 }
 
 module albc {
-  source = "../../../module/albc"
-  app_name = local.app_name
-  stage = local.stage
+  source = "../../module/albc"
+  app_name = var.app_name
+  stage = var.stage
   # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster#vpc_config
-  vpc_id = data.aws_eks_cluster.this.vpc_config[0].vpc_id
+  vpc_id = local.vpc_id
   // このコマンドで取得できる:
   // aws eks describe-cluster --name baseport-prd --output text --query "cluster.identity.oidc.issuer"
-  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+  eks_oidc_issure_url = local.cluster_identity_oidc_issure
   ingress_dev_cidr_blocks = var.albc_ingress_dev_cidr_blocks
   ingress_internal_cidr_blocks = var.albc_ingress_internal_cidr_blocks
 }
 
 module keda {
-  source = "../../../module/keda"
-  app_name = local.app_name
-  stage = local.stage
+  source = "../../module/keda"
+  app_name = var.app_name
+  stage = var.stage
   // このコマンドで取得できる:
   // aws eks describe-cluster --name baseport-prd --output text --query "cluster.identity.oidc.issuer"
-  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+  eks_oidc_issure_url = local.cluster_identity_oidc_issure
 
 }
 
 module argocd {
-  source = "../../../module/argocd"
+  source = "../../module/argocd"
 }
 
 module karpenter {
-  source = "../../../module/karpenter"
-  app_name = local.app_name
-  stage = local.stage
+  source = "../../module/karpenter"
+  app_name = var.app_name
+  stage = var.stage
   // このコマンドで取得できる:
   // aws eks describe-cluster --name baseport-prd --output text --query "cluster.identity.oidc.issuer"
-  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+  eks_oidc_issure_url = local.cluster_identity_oidc_issure
 
 }
 
 module metrics_server {
-  source = "../../../module/metrics-server"
+  source = "../../module/metrics-server"
 }
 
 module efs_csi_driver {
-  source = "../../../module/efs-csi-driver"
-  app_name = local.app_name
-  stage = local.stage
-  vpc_id = data.aws_eks_cluster.this.vpc_config[0].vpc_id
-  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+  source = "../../module/efs-csi-driver"
+  app_name = var.app_name
+  stage = var.stage
+  vpc_id = local.vpc_id
+  eks_oidc_issure_url = local.cluster_identity_oidc_issure
 }
 
 module secret_store_csi_driver {
-  source = "../../../module/secret-store-csi-driver"
-  app_name = local.app_name
-  stage = local.stage
-  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+  source = "../../module/secret-store-csi-driver"
+  app_name = var.app_name
+  stage = var.stage
+  eks_oidc_issure_url = local.cluster_identity_oidc_issure
 }
 
 module tools {
-  source = "../../../module/tools"
-  app_name = local.app_name
-  stage = local.stage
-  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+  source = "../../module/tools"
+  app_name = var.app_name
+  stage = var.stage
+  eks_oidc_issure_url = local.cluster_identity_oidc_issure
 }
 
 module nvidia_device_plugin {
-  source = "../../../module/nvidia-device-plugin"
+  source = "../../module/nvidia-device-plugin"
 }
 
 #module kubecost {
-#  source = "../../../module/kubecost"
+#  source = "../../module/kubecost"
 #}
 
 module prometheus {
-  source = "../../../module/prometheus"
+  source = "../../module/prometheus"
 }
 
 module opencost {
-  source = "../../../module/opencost"
-  app_name = local.app_name
-  stage = local.stage
+  source = "../../module/opencost"
+  app_name = var.app_name
+  stage = var.stage
   cluster_name = local.cluster_name
   datafeed_bucket_name = "spot-instance-datafeed-dm5b7kok4h"
   depends_on = [ module.prometheus ]
 }
 
 module s3_csi_driver {
-  source = "../../../module/mountpoint-s3-csi-driver"
-  app_name = local.app_name
-  stage = local.stage
-  eks_oidc_issure_url = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
+  source = "../../module/mountpoint-s3-csi-driver"
+  app_name = var.app_name
+  stage = var.stage
+  eks_oidc_issure_url = local.cluster_identity_oidc_issure
 }
