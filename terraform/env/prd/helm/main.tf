@@ -1,5 +1,5 @@
 terraform {
-  required_version = "~> 1.9.8"
+  required_version = "~> 1.10.3"
 
   backend "s3" {
     bucket = "tfstate-store-a5gnpkub"
@@ -14,7 +14,7 @@ terraform {
     // AWS Provider: https://registry.terraform.io/providers/hashicorp/aws/latest/docs
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.64.0"
+      version = "~> 5.84.0"
     }
     // Kubernetes Provider: https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs
     kubernetes = {
