@@ -3,7 +3,7 @@ terraform {
 
   backend "s3" {
     bucket = "tfstate-store-a5gnpkub"
-    key    = "baseport/prd/helm/terraform.tfstate"
+    key    = "baseport/prd/plugin/terraform.tfstate"
     #bucket = "kubernetes-work-tfstate"
     #key    = "eks-work-iac/prd/helm/terraform.tfstate"
     region = "ap-northeast-1"
