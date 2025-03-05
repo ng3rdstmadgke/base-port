@@ -1,18 +1,14 @@
 terraform {
-  required_version = "~> 1.8.5"
+  required_version = "~> 1.10.3"
 
   backend "s3" {
-    bucket = "tfstate-store-a5gnpkub"
-    key    = "baseport/prd/database/terraform.tfstate"
-    region = "ap-northeast-1"
-    encrypt = true
   }
 
   required_providers {
     // AWS Provider: https://registry.terraform.io/providers/hashicorp/aws/latest/docs
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.55.0"
+      version = "~> 5.84.0"
     }
   }
 }
@@ -26,13 +22,6 @@ provider "aws" {
   }
 }
 
-locals {
-  app_name = "baseport"
-  stage = "prd"
-  cluster_name = "${local.app_name}-${local.stage}"
-  user_name = "admin"
-}
-
 resource "random_password" "db_password" {
   length           = 16
   lower            = true  # 小文字を文字列に含める
@@ -42,26 +31,12 @@ resource "random_password" "db_password" {
   override_special = "@_=+-"  # 記号で利用する文字列を指定 (default: !@#$%&*()-_=+[]{}<>:?)
 }
 
-// Data Source: aws_eks_cluster
-// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster
-data "aws_eks_cluster" "this" {
-  name = local.cluster_name
-}
-
-output "db_host" {
-  value = aws_db_instance.app_db.address
-}
-
-output "db_port" {
-  value = aws_db_instance.app_db.port
-}
-
 #
 # RDS
 #
 resource "aws_security_group" "app_db_sg" {
-  name = "${local.app_name}-${local.stage}-db"
-  vpc_id = data.aws_eks_cluster.this.vpc_config[0].vpc_id
+  name = "${var.app_name}-${var.stage}-db"
+  vpc_id = local.vpc_id
   egress {
     from_port   = 0
     to_port     = 0
@@ -75,7 +50,7 @@ resource "aws_security_group" "app_db_sg" {
     cidr_blocks = [ "10.0.0.0/8" ]
   }
   tags = {
-    "Name" = "${local.app_name}-${local.stage}-db"
+    "Name" = "${var.app_name}-${var.stage}-db"
   }
 }
 
@@ -87,7 +62,7 @@ resource "aws_security_group" "app_db_sg" {
  * aws rds describe-engine-default-parameters --db-parameter-group-family mysql8.0
  */
 resource "aws_db_parameter_group" "app_db_pg" {
-  name = "${local.app_name}-${local.stage}-db"
+  name = "${var.app_name}-${var.stage}-db"
   family = "mysql8.0"
   parameter {
     name = "character_set_client"
@@ -124,17 +99,17 @@ resource "aws_db_parameter_group" "app_db_pg" {
 }
 
 resource "aws_db_subnet_group" "app_db_subnet_group" {
-  name       = "${local.app_name}-${local.stage}-db"
-  subnet_ids = data.aws_eks_cluster.this.vpc_config[0].subnet_ids
+  name       = "${var.app_name}-${var.stage}-db"
+  subnet_ids = local.private_subnet_ids
 }
 
 resource "aws_db_instance" "app_db" {
-  identifier = "${local.app_name}-${local.stage}-db"
+  identifier = "${var.app_name}-${var.stage}-db"
   storage_encrypted = true
   engine               = "mysql"
   allocated_storage    = 20
   max_allocated_storage = 100
-  db_name              = local.app_name
+  db_name              = var.app_name
   engine_version       = "8.0"
   instance_class       = "db.t3.micro"
   db_subnet_group_name = aws_db_subnet_group.app_db_subnet_group.name
@@ -161,7 +136,7 @@ resource "aws_db_instance" "app_db" {
 # DBのログイン情報を保持する SecretsManager
 #
 resource "aws_secretsmanager_secret" "app_db_secret" {
-  name = "/${local.app_name}/${local.stage}/db"
+  name = "/${var.app_name}/${var.stage}/db"
   recovery_window_in_days = 0
   force_overwrite_replica_secret = true
 
