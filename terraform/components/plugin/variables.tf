@@ -29,12 +29,22 @@ variable "albc_ingress_dev_cidr_blocks" {
 }
 
 locals {
+  project_dir = data.terraform_remote_state.base.outputs.project_dir
   vpc_id = data.terraform_remote_state.network.outputs.vpc_id
   cluster_name = data.terraform_remote_state.cluster.outputs.eks_cluster_name
   cluster_endpoint = data.terraform_remote_state.cluster.outputs.eks_cluster_endpoint
   cluster_certificate_authority_data = data.terraform_remote_state.cluster.outputs.eks_cluster_certificate_authority_data
   cluster_identity_oidc_issure = data.terraform_remote_state.cluster.outputs.eks_cluster_identity_oidc_issure
-  cluster_auth_token = data.terraform_remote_state.cluster.outputs.eks_cluster_auth_token
+}
+
+data terraform_remote_state "base" {
+  backend = "s3"
+
+  config = {
+    region = var.tfstate_region
+    bucket = var.tfstate_bucket
+    key    = "${var.app_name}/${var.stage}/base/terraform.tfstate"
+  }
 }
 
 data terraform_remote_state "network" {

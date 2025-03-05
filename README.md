@@ -3,14 +3,31 @@
 EKS環境を構築するプロジェクト
 
 
-# Get Started
-
-## EKSクラスタ作成
+# デプロイ
 
 ```bash
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/cluster init
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/cluster plan
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/cluster apply -auto-approve
+STAGE=prd
+```
+
+## ベースコンポーネント
+
+```bash
+make tf-plan STAGE=$STAGE COMPONENT=base
+make tf-apply STAGE=$STAGE COMPONENT=base
+```
+
+## ネットワークコンポーネント
+
+```bash
+make tf-plan STAGE=$STAGE COMPONENT=network
+make tf-apply STAGE=$STAGE COMPONENT=network
+```
+
+## EKSクラスタコンポーネント
+
+```bash
+make tf-plan STAGE=$STAGE COMPONENT=cluster
+make tf-apply STAGE=$STAGE COMPONENT=cluster
 ```
 
 `~/.kube/config` にクラスタを登録
@@ -22,67 +39,58 @@ aws eks update-kubeconfig --name baseport-prd
 kubectl get all
 ```
 
-## AWSコンソールからpodを閲覧できるようにする
+## ノードグループコンポーネントの作成
 
 ```bash
-CLUSTER_NAME=baseport-prd
-ROLE_ARN=arn:aws:iam::xxxxxxxxxxxx:role/xxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-# IAMロールにEKSの権限を付与する (aws-auth ConfigMapに設定を追加)
-eksctl create iamidentitymapping \
-  --cluster $CLUSTER_NAME \
-  --region ap-northeast-1 \
-  --arn $ROLE_ARN \
-  --group system:masters \
-  --username AwsConsole
-
-# 指定したロールがsystem:mastersグループに属しているかを確認
-kubectl describe -n kube-system configmap/aws-auth
+make tf-plan STAGE=$STAGE COMPONENT=node-group
+make tf-apply STAGE=$STAGE COMPONENT=node-group
 ```
 
-## ノードグループの作成
+## アドオンコンポーネントの作成
 
 ```bash
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/node init
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/node plan
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/node apply -auto-approve
+make tf-plan STAGE=$STAGE COMPONENT=addon
+make tf-apply STAGE=$STAGE COMPONENT=addon
 ```
 
-## Helmチャートのインストール
+## プラグインチャートのインストール
 
 ```bash
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/helm init
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/helm plan
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/helm apply -auto-approve
+make tf-plan STAGE=$STAGE COMPONENT=plugin
+make tf-apply STAGE=$STAGE COMPONENT=plugin
 ```
 
-## DBの作成
-
-```bash
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/database init
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/database plan
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/database apply -auto-approve
-```
-
-## サービスリソース作成
-
-```bash
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/service init
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/service plan
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/service apply -auto-approve
-```
-
-## セットアップスクリプトの実行
+### セットアップスクリプトの実行
 
 ```bash
 # Karpenterのノードプールを作成
 ./plugin/karpenter/setup.sh
 ```
 
+## DBの作成
+
+```bash
+make tf-plan STAGE=$STAGE COMPONENT=database
+make tf-apply STAGE=$STAGE COMPONENT=database
+```
+
+## サービスリソース作成
+
+```bash
+make tf-plan STAGE=$STAGE COMPONENT=service
+make tf-apply STAGE=$STAGE COMPONENT=service
+```
 
 # 削除
 
 ```bash
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/helm destroy -auto-approve
-terraform -chdir=${PROJECT_DIR}/terraform/env/prd/cluster destroy -auto-approve
+STAGE=prd
+make tf-delete STAGE=$STAGE COMPONENT=service && \
+make tf-delete STAGE=$STAGE COMPONENT=database && \
+make tf-delete STAGE=$STAGE COMPONENT=plugin && \
+make tf-delete STAGE=$STAGE COMPONENT=addon && \
+make tf-delete STAGE=$STAGE COMPONENT=node-group && \
+make tf-delete STAGE=$STAGE COMPONENT=cluster && \
+make tf-delete STAGE=$STAGE COMPONENT=network && \
+make tf-delete STAGE=$STAGE COMPONENT=base
 ```

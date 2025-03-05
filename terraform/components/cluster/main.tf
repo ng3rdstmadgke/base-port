@@ -33,6 +33,7 @@ module eks {
   access_entries = var.access_entries
 }
 
+// TODO: serviceに移動
 module efs {
   source = "../../module/efs"
   app_name = var.app_name

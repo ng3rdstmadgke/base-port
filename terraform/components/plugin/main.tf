@@ -33,13 +33,19 @@ provider "aws" {
 }
 
 
+// Data Source: aws_eks_cluster_auth
+// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth
+data "aws_eks_cluster_auth" "this" {
+  name = local.cluster_name
+}
+
 // Kubernetes Provider: https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs
 provider "kubernetes" {
   // kubenetesAPIのホスト名(URL形式)。KUBE_HOST環境変数で指定している値に基づく。
   host                   = local.cluster_endpoint
   // TLS認証用のPEMエンコードされたルート証明書のバンドル
   cluster_ca_certificate = base64decode(local.cluster_certificate_authority_data)
-  token                  = local.cluster_auth_token
+  token                  = data.aws_eks_cluster_auth.this.token
 }
 
 // Helm Provider: https://registry.terraform.io/providers/hashicorp/helm/latest/docs
@@ -47,7 +53,7 @@ provider "helm" {
   kubernetes {
     host                   = local.cluster_endpoint
     cluster_ca_certificate = base64decode(local.cluster_certificate_authority_data)
-    token                  = local.cluster_auth_token
+    token                  = data.aws_eks_cluster_auth.this.token
   }
 }
 

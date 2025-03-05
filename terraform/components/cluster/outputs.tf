@@ -41,19 +41,9 @@ output "eks_cluster_identity_oidc_issure" {
   value = data.aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
 
-output "eks_cluster_auth_token" {
-  value = data.aws_eks_cluster_auth.this.token
-  sensitive = true
-}
 
 // Data Source: aws_eks_cluster
 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster
 data "aws_eks_cluster" "this" {
-  name = module.eks.cluster.name
-}
-
-// Data Source: aws_eks_cluster_auth
-// https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth
-data "aws_eks_cluster_auth" "this" {
   name = module.eks.cluster.name
 }
