@@ -2,10 +2,6 @@ terraform {
   required_version = "~> 1.10.3"
 
   backend "s3" {
-    bucket = "tfstate-store-a5gnpkub"
-    key    = "baseport/prd/addon/terraform.tfstate"
-    region = "ap-northeast-1"
-    encrypt = true
   }
 
   required_providers {
