@@ -18,7 +18,7 @@ spec:
   accessModes:
     # 複数のPodから同時に読み書きされる
     - ReadWriteMany  # ReadWriteOnce, ReadOnlyMany, ReadWriteMany
-  storageClassName: efs-sc
+  storageClassName: efs-sc-common-01
   # PVがPVCから開放されたときの処理方法
   # Retain: ボリュームは削除されずに保持される
   # Delete: ボリュームは削除される
@@ -43,7 +43,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteMany
-  storageClassName: efs-sc
+  storageClassName: efs-sc-common-01
   resources:
     requests:
       storage: 5Gi

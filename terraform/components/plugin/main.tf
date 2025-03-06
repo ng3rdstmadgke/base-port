@@ -63,8 +63,6 @@ module albc {
   stage = var.stage
   # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster#vpc_config
   vpc_id = local.vpc_id
-  // このコマンドで取得できる:
-  // aws eks describe-cluster --name baseport-prd --output text --query "cluster.identity.oidc.issuer"
   eks_oidc_issure_url = local.cluster_identity_oidc_issure
   ingress_dev_cidr_blocks = var.albc_ingress_dev_cidr_blocks
   ingress_internal_cidr_blocks = var.albc_ingress_internal_cidr_blocks
@@ -74,10 +72,7 @@ module keda {
   source = "../../module/keda"
   app_name = var.app_name
   stage = var.stage
-  // このコマンドで取得できる:
-  // aws eks describe-cluster --name baseport-prd --output text --query "cluster.identity.oidc.issuer"
   eks_oidc_issure_url = local.cluster_identity_oidc_issure
-
 }
 
 module argocd {
@@ -88,10 +83,7 @@ module karpenter {
   source = "../../module/karpenter"
   app_name = var.app_name
   stage = var.stage
-  // このコマンドで取得できる:
-  // aws eks describe-cluster --name baseport-prd --output text --query "cluster.identity.oidc.issuer"
   eks_oidc_issure_url = local.cluster_identity_oidc_issure
-
 }
 
 module metrics_server {

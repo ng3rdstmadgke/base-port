@@ -8,12 +8,12 @@
  */
 // https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/efs_file_system
 resource "aws_efs_file_system" "this" {
-  creation_token = "${var.app_name}-${var.stage}"
+  creation_token = "${var.app_name}-${var.stage}-${var.name}"
   encrypted = true
   throughput_mode = "elastic"
 
   tags = {
-    Name = "${var.app_name}-${var.stage}"
+    Name = "${var.app_name}-${var.stage}-${var.name}"
   }
 }
 
@@ -28,7 +28,7 @@ resource "aws_efs_mount_target" "alpha" {
 }
 
 resource "aws_security_group" "efs" {
-  name        = "${var.app_name}-${var.stage}-efsMountTarget"
+  name        = "${var.app_name}-${var.stage}-${var.name}-efsMountTarget"
   description = "Allow EKS Cluster SG access."
   vpc_id      = var.vpc_id
 
@@ -40,6 +40,19 @@ resource "aws_security_group" "efs" {
     security_groups = [var.eks_cluster_sg_id]
   }
   tags = {
-    Name = "${var.app_name}-${var.stage}-efsMountTarget"
+    Name = "${var.app_name}-${var.stage}-${var.name}-efsMountTarget"
   }
+}
+
+resource "local_file" "eks_automode_nodepool_yaml_01" {
+  filename = "${var.project_dir}/plugin/efs/resources/storageclass-${var.name}.yaml"
+  directory_permission = "0755"
+  file_permission = "0644"
+  content = templatefile(
+    "${path.module}/resources/storageclass.yaml",
+    {
+      name = var.name,
+      efs_id = aws_efs_file_system.this.id,
+    }
+  )
 }

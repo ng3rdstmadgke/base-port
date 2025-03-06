@@ -6,11 +6,8 @@
 # デプロイ
 
 ```bash
-# ${PROJECT_DIR}/plugin/efs/tmp/sc.yaml の作成
-${PROJECT_DIR}/plugin/efs/setup.sh
-
 # StorageClass作成
-$ kubectl apply -f ${PROJECT_DIR}/plugin/efs/tmp/sc.yaml
+$ kubectl apply -f ${PROJECT_DIR}/plugin/efs/resources/storageclass-common-01.yaml
 storageclass.storage.k8s.io/efs-sc created
 
 # 確認

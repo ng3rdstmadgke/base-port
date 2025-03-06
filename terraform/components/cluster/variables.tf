@@ -27,7 +27,6 @@ variable access_entries {
 
 
 locals {
-  vpc_id = data.terraform_remote_state.network.outputs.vpc_id
   private_subnet_ids = data.terraform_remote_state.network.outputs.private_subnet_ids
   project_dir = data.terraform_remote_state.base.outputs.project_dir
 }

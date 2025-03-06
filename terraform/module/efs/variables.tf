@@ -1,10 +1,27 @@
-variable app_name {}
-variable stage {}
-variable vpc_id {}
+variable app_name {
+  type = string
+}
+
+variable stage {
+  type = string
+}
+
+variable name {
+  type = string
+}
+
+variable vpc_id {
+  type = string
+}
+
 variable private_subnets {
   type = list(string)
 }
-variable eks_cluster_sg_id {}
 
-data "aws_caller_identity" "self" { }
-data "aws_region" "self" {}
+variable eks_cluster_sg_id {
+  type = string
+}
+
+variable project_dir {
+  type = string
+}

@@ -1,7 +1,3 @@
-output "efs_id" {
-  value = module.efs.efs_id
-}
-
 output "eks_cluster_name" {
   value = module.eks.cluster.name
 }
