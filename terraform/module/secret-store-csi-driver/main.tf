@@ -15,7 +15,7 @@ resource "helm_release" "csi_secrets_store" {
   name       = "csi-secrets-store"
   repository = "https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts"
   chart      = "secrets-store-csi-driver"
-  version    = "1.4.4"  # helm search repo secrets-store-csi-driver
+  version    = "1.4.8"  # helm search repo secrets-store-csi-driver
   namespace  = "kube-system"
   create_namespace = true
 
@@ -51,7 +51,7 @@ resource "helm_release" "secrets_provider_aws" {
   name       = "secrets-provider-aws"
   repository = "https://aws.github.io/secrets-store-csi-driver-provider-aws"
   chart      = "secrets-store-csi-driver-provider-aws"
-  version    = "0.3.9"  # helm search repo secrets-store-csi-driver-provider-aws
+  version    = "0.3.11"  # helm search repo secrets-store-csi-driver-provider-aws
   namespace  = "kube-system"
   create_namespace = true
 
