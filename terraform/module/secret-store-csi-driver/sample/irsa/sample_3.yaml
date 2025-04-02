@@ -1,0 +1,69 @@
+---
+# https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver_SecretProviderClass.html
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  namespace: ${namespace}
+  name: ascp-test-irsa-secrets-3
+spec:
+  provider: aws
+  secretObjects:
+    - secretName: db-secret-3
+      type: Opaque
+      data:
+        - key: username
+          objectName: alias_username
+        - key: password
+          objectName: alias_password
+  parameters:
+    objects: |
+        - objectName: "${secrets_name}"
+          objectType: "secretsmanager"
+          jmesPath:
+            - path: "username"
+              objectAlias: "alias_username"  # ポッドにマウントするファイル名
+            - path: "password"
+              objectAlias: "alias_password"  # ポッドにマウントするファイル名
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ${namespace}
+  name: ascp-test-irsa-deployment-3
+spec:
+  selector:
+    matchLabels:
+      app: app-3
+  template:
+    metadata:
+      labels:
+        app: app-3
+    spec:
+      serviceAccountName: ${service_account}
+      containers:
+        - name: ascp-test-irsa-deployment
+          image: ubuntu
+          command: ["sleep", "infinity"]
+          env:
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: db-secret-3 # SecretObjectsのsecretName
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-secret-3 # SecretObjectsのsecretName
+                key: password
+          volumeMounts:
+            - name: csi-secret-volume
+              mountPath: /mnt/secrets-store
+              readOnly: true
+      volumes:
+        # CSIストレージ指定
+        - name: csi-secret-volume
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: ascp-test-irsa-secrets-3

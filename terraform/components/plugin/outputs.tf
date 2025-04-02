@@ -6,10 +6,6 @@ output "keda_operator_role_arn" {
   value = module.keda.keda_operator_role_arn
 }
 
-output "ascp_test_service_account" {
-  value = module.secret_store_csi_driver.ascp_test_service_account
-}
-
 output "ingress_dev_sg" {
   value = module.albc.ingress_dev_sg
 }

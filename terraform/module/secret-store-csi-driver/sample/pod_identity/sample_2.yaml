@@ -1,0 +1,58 @@
+---
+# https://docs.aws.amazon.com/secretsmanager/latest/userguide/integrating_csi_driver_SecretProviderClass.html
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  namespace: ${namespace}
+  name: ascp-test-pod-identity-secrets-2
+spec:
+  provider: aws
+  secretObjects:
+    - secretName: db-secret-2
+      type: Opaque
+      data:
+        - key: db_secret
+          objectName: ${escaped_secret_name}
+  parameters:
+    usePodIdentity: "true"  # Pod Identityを使用する場合はtrue
+    objects: |
+        - objectName: "${secrets_name}"
+          objectType: "secretsmanager"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ${namespace}
+  name: ascp-test-pod-identity-deployment-2
+spec:
+  selector:
+    matchLabels:
+      app: app-2
+  template:
+    metadata:
+      labels:
+        app: app-2
+    spec:
+      serviceAccountName: ${service_account}
+      containers:
+        - name: ascp-test-pod-identity-deployment
+          image: ubuntu
+          command: ["sleep", "infinity"]
+          env:
+          - name: DB_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: db-secret-2  # SecretObjectsのsecretName
+                key: db_secret
+          volumeMounts:
+            - name: csi-secret-volume
+              mountPath: /mnt/secrets-store
+              readOnly: true
+      volumes:
+        # CSIストレージ指定
+        - name: csi-secret-volume
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: ascp-test-pod-identity-secrets-2

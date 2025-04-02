@@ -102,7 +102,9 @@ module secret_store_csi_driver {
   source = "../../module/secret-store-csi-driver"
   app_name = var.app_name
   stage = var.stage
+  project_dir = local.project_dir
   eks_oidc_issure_url = local.cluster_identity_oidc_issure
+  eks_cluster_name = local.cluster_name
 }
 
 module tools {

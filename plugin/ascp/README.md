@@ -1,132 +1,114 @@
-# 動作確認
+# 動作確認 (Pod Identity)
 
-Secretsとマニフェストの生成
+## 作成
 
 ```bash
-$ ${PROJECT_DIR}/plugin/secrets-manager/sample/setup.sh
+kubectl apply -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/pod_identity/sample_1.yaml
+kubectl apply -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/pod_identity/sample_2.yaml
+kubectl apply -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/pod_identity/sample_3.yaml
 ```
 
-## 1. シークレットファイルをマウントする方式
+## 動作チェック
 
-SecretProviderClassの作成
+### sample_1 (シークレットファイルをマウントする方式)
 
 ```bash
-$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_1.yaml
-
-# 確認
-$ kubectl get secretproviderclass
-NAME                  AGE
-ascp-test-secrets-1   8s
+cat /mnt/secrets-store/_baseport_prd_sample
+# {"password":"sample_password","username":"sample_user"}
 ```
 
-Deploymentの作成
-
+### sample_2 (Podの環境変数にアサインする方式)
 
 ```bash
-$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_1.yaml
+cat /mnt/secrets-store/_baseport_prd_sample 
+# {"password":"sample_password","username":"sample_user"}
+
+printenv | grep "^DB"
+# DB_SECRET={"password":"sample_password","username":"sample_user"}
 ```
 
-確認
+### sample_3 (Podの環境変数にアサインする方式)
 
 ```bash
-# k9sで ascp-test-deployment-1-* podに接続
-$ cat /mnt/secrets-store/_baseport_prd_ascp-test
-{"username":"hogehoge", "password":"piyopiyo"}
+ls /mnt/secrets-store/
+# _baseport_prd_sample  alias_password  alias_username
+
+cat /mnt/secrets-store/_baseport_prd_sample
+# {"password":"sample_password","username":"sample_user"}
+
+cat /mnt/secrets-store/alias_password
+# sample_password
+
+cat /mnt/secrets-store/alias_username
+# sample_use
+
+printenv | grep "^DB_"
+# DB_PASSWORD=sample_password
+# DB_USER=sample_user
 ```
 
-削除
+
+## 削除
 
 ```bash
-$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_1.yaml
-$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_1.yaml
+kubectl delete -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/pod_identity/sample_1.yaml
+kubectl delete -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/pod_identity/sample_2.yaml
+kubectl delete -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/pod_identity/sample_3.yaml
 ```
 
-## 2. Podの環境変数にアサインする方式
+# 動作確認 (IRSA)
 
-SecretProviderClassの作成
+## 作成
 
 ```bash
-$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_2.yaml
-
-# 確認
-$ kubectl get secretproviderclass
-NAME                  AGE
-ascp-test-secrets-2   8s
+kubectl apply -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/irsa/sample_1.yaml
+kubectl apply -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/irsa/sample_2.yaml
+kubectl apply -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/irsa/sample_3.yaml
 ```
 
-Deploymentの作成
+## 動作チェック
 
+### sample_1 (シークレットファイルをマウントする方式)
 
 ```bash
-$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
-
-# ボリュームのマウント状態の確認
-$ kubectl get secretproviderclasspodstatus
+cat /mnt/secrets-store/_baseport_prd_sample
+# {"password":"sample_password","username":"sample_user"}
 ```
 
-確認
+### sample_2 (Podの環境変数にアサインする方式)
 
 ```bash
-# k9sで ascp-test-deployment-2-* podに接続
+cat /mnt/secrets-store/_baseport_prd_sample 
+# {"password":"sample_password","username":"sample_user"}
 
-# マウントされているファイルの確認
-$ cat /mnt/secrets-store/_baseport_prd_ascp-test
-{"username":"hogehoge", "password":"piyopiyo"}
-
-# 環境変数の確認
-$ echo $DB_SECRET
-{"username":"hogehoge", "password":"piyopiyo"}
+printenv | grep "^DB"
+# DB_SECRET={"password":"sample_password","username":"sample_user"}
 ```
 
-削除
+### sample_3 (Podの環境変数にアサインする方式)
 
 ```bash
-$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_2.yaml
-$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_2.yaml
+ls /mnt/secrets-store/
+# _baseport_prd_sample  alias_password  alias_username
+
+cat /mnt/secrets-store/_baseport_prd_sample
+# {"password":"sample_password","username":"sample_user"}
+
+cat /mnt/secrets-store/alias_password
+# sample_password
+
+cat /mnt/secrets-store/alias_username
+# sample_use
+
+printenv | grep "^DB_"
+# DB_PASSWORD=sample_password
+# DB_USER=sample_user
 ```
 
-## 3. JSONをパースしてPodの環境変数にアサインする方式
-
-SecretProviderClassの作成
+## 削除
 
 ```bash
-$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_3.yaml
-
-# 確認
-$ kubectl get secretproviderclass
-NAME                  AGE
-ascp-test-secrets-3   8s
-```
-
-Deploymentの作成
-
-
-```bash
-$ kubectl apply -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_3.yaml
-
-# ボリュームのマウント状態の確認
-$ kubectl get secretproviderclasspodstatus
-```
-
-確認
-
-```bash
-# k9sで ascp-test-deployment-2-* podに接続
-
-# マウントされているファイルの確認
-$ cat /mnt/secrets-store/_baseport_prd_ascp-test
-{"username":"hogehoge", "password":"piyopiyo"}
-
-# 環境変数の確認
-$ echo $DB_USER
-hogehoge
-$ echo $DB_PASSWORD
-piyopiyo
-```
-
-削除
-
-```bash
-$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/deployment_3.yaml
-$ kubectl delete -f ${PROJECT_DIR}/plugin/secrets-manager/sample/tmp/spc_3.yaml
+kubectl delete -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/irsa/sample_1.yaml
+kubectl delete -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/irsa/sample_2.yaml
+kubectl delete -f $PROJECT_DIR/plugin/ascp/sample/prd/manifest/irsa/sample_3.yaml
 ```
