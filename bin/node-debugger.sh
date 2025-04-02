@@ -15,5 +15,11 @@ ubuntu:24.04
 EOF
 )
 
+# ノードデバッガーのPodを起動
 echo kubectl debug node/${NODE_NAME} -ti --image=$IMAGE -- /bin/bash
 kubectl debug node/${NODE_NAME} -ti --image=$IMAGE -- /bin/bash
+
+# ノードデバッガーのPodを削除
+for pod in $(kubectl get po -o json | jq -r ".items[].metadata.name" | grep -e "^node-debugger"); do
+  kubectl delete po $pod
+done
