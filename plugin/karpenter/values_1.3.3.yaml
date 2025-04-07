@@ -1,0 +1,20 @@
+# https://github.com/aws/karpenter-provider-aws/blob/v1.1.0/charts/karpenter/values.yaml
+settings:
+  clusterName: baseport-prd
+  interruptionQueue: baseport-prd-KarpenterInterruptionQueue
+controller:
+  resources:
+    requests:
+      cpu: 0.5
+      memory: 1Gi
+    limits:
+      cpu: 0.5
+      memory: 1Gi
+serviceAccount:
+  create: false
+  name: karpenter
+#logLevel: debug
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: ScheduleAnyway  # KarpenterコントローラPodをZone事に分散させる設定を緩和

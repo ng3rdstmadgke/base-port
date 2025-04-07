@@ -87,7 +87,7 @@ resource "aws_iam_role" "karpenter_controller_role" {
 resource "aws_iam_policy" "karpenter_controller_policy" {
   name = "${var.app_name}-${var.stage}-KarpenterControllerPolicy"
   policy = templatefile(
-    "${path.module}/karpenter_controller_policy_1.1.0.json",
+    "${path.module}/karpenter_controller_policy_1.3.3.json",
     {
       cluster_name = local.cluster_name
       account_id   = local.account_id
@@ -192,12 +192,8 @@ resource "aws_sqs_queue_policy" "karpenter_interruption_queue" {
 resource "aws_cloudwatch_event_rule" "scheduled_change_rule" {
   name        = "${var.app_name}-${var.stage}-ScheduledChangeRule"
   event_pattern = jsonencode({
-    source = [
-      "aws.health"
-    ],
-    detail-type = [
-      "AWS Health Event"
-    ]
+    source = [ "aws.health" ]
+    detail-type = [ "AWS Health Event" ]
   })
 }
 
@@ -213,12 +209,8 @@ resource "aws_cloudwatch_event_target" "scheduled_change_rule" {
 resource "aws_cloudwatch_event_rule" "spot_interruption_rule" {
   name        = "${var.app_name}-${var.stage}-SpotInterruptionRule"
   event_pattern = jsonencode({
-    source = [
-      "aws.ec2"
-    ],
-    detail-type = [
-      "EC2 Spot Instance Interruption Warning"
-    ]
+    source = [ "aws.ec2" ]
+    detail-type = [ "EC2 Spot Instance Interruption Warning" ]
   })
 }
 
@@ -235,12 +227,8 @@ resource "aws_cloudwatch_event_target" "spot_interruption_rule" {
 resource "aws_cloudwatch_event_rule" "rebalance_rule" {
   name        = "${var.app_name}-${var.stage}-RebalanceRule"
   event_pattern = jsonencode({
-    source = [
-      "aws.ec2"
-    ],
-    detail-type = [
-      "EC2 Instance Rebalance Recommendation"
-    ]
+    source = [ "aws.ec2" ]
+    detail-type = [ "EC2 Instance Rebalance Recommendation" ]
   })
 }
 
@@ -258,12 +246,8 @@ resource "aws_cloudwatch_event_target" "rebalance_rule" {
 resource "aws_cloudwatch_event_rule" "instance_state_change_rule" {
   name        = "${var.app_name}-${var.stage}-InstanceStateChangeRule"
   event_pattern = jsonencode({
-    source = [
-      "aws.ec2"
-    ],
-    detail-type = [
-      "EC2 Instance State-change Notification"
-    ]
+    source = [ "aws.ec2" ]
+    detail-type = [ "EC2 Instance State-change Notification" ]
   })
 }
 
@@ -273,78 +257,31 @@ resource "aws_cloudwatch_event_target" "instance_state_change_rule" {
   arn = aws_sqs_queue.karpenter_interruption_queue.arn
 }
 
+
 /**
- * karpenterチャートをインストールします。
- *
- * 参考
- *   - リポジトリ | AWS: https://gallery.ecr.aws/karpenter/karpenter
- *   - karpenter-provider-aws | GitHub: https://github.com/aws/karpenter-provider-aws/tree/v1.1.0
+ * Karpenterのvalues.yamlを作成します。
  */
-
-//helm_release - helm - terraform: https://registry.terraform.io/providers/hashicorp/helm/latest/docs/resources/release
-resource "helm_release" "karpenter" {
-  name       = "karpenter"
-  #repository = "xxxxxxxxxxxxxxxxxxxxx"
-  chart      = "oci://public.ecr.aws/karpenter/karpenter"
-  version    = "1.1.0"
-  namespace  = local.namespace
-  create_namespace = true
-
-  /**
-   * values: https://github.com/aws/karpenter-provider-aws/blob/main/charts/karpenter/values.yaml
-   */
-  set {
-    name  = "settings.clusterName"
-    value = local.cluster_name
-  }
-
-  set {
-    name  = "settings.interruptionQueue"
-    value = "${var.app_name}-${var.stage}-KarpenterInterruptionQueue"
-  }
-
-  set {
-    name  = "controller.resources.requests.cpu"
-    value = "1"
-  }
-
-  set {
-    name  = "controller.resources.requests.memory"
-    value = "1Gi"
-  }
-
-  set {
-    name  = "controller.resources.limits.cpu"
-    value = "1"
-  }
-
-  set {
-    name  = "controller.resources.limits.memory"
-    value = "1Gi"
-  }
-
-  set {
-    name = "serviceAccount.create"
-    value = false
-  }
-
-  set {
-    name  = "serviceAccount.name"
-    value = local.service_account
-  }
-
-  set {
-    name = "logLevel"
-    value = "debug"
-  }
-
-
-  wait = true
-
-  depends_on = [
-    aws_iam_role.karpenter_controller_role,
-    aws_sqs_queue.karpenter_interruption_queue
-  ]
+resource "local_file" "karpenter_values_1_1_0" {
+  filename = "${var.project_dir}/plugin/karpenter/values_1.1.0.yaml"
+  content = templatefile(
+    "${path.module}/karpenter_values_1.1.0.yaml",
+    {
+      cluster_name = local.cluster_name
+      interruption_queue_name = "${var.app_name}-${var.stage}-KarpenterInterruptionQueue"
+      service_account = local.service_account
+    }
+  )
+}
+resource "local_file" "karpenter_values_1_3_3" {
+  filename = "${var.project_dir}/plugin/karpenter/values_1.3.3.yaml"
+  content = templatefile(
+    "${path.module}/karpenter_values_1.3.3.yaml",
+    {
+      cluster_name = local.cluster_name
+      interruption_queue_name = "${var.app_name}-${var.stage}-KarpenterInterruptionQueue"
+      service_account = local.service_account
+    }
+  )
 }
 
 /**

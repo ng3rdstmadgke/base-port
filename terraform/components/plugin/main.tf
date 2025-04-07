@@ -83,6 +83,7 @@ module karpenter {
   source = "../../module/karpenter"
   app_name = var.app_name
   stage = var.stage
+  project_dir = local.project_dir
   eks_oidc_issure_url = local.cluster_identity_oidc_issure
 }
 
