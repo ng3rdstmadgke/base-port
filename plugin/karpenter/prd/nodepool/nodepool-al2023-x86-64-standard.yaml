@@ -1,0 +1,43 @@
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: al2023-x86-64-standard
+spec:
+  template:
+    metadata:
+      labels:
+        karpenter.baseport.net/nodeclass: al2023-x86-64
+    spec:
+      terminationGracePeriod: 24h  # ノードが強制削除される前にdrainできる最大時間
+      expireAfter: 720h  # クラスタにノードが存在できる最長時間 (ノードの長期間の稼動による問題(メモリリークなど)のリスクを低減する)
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]  # spot or on-demand
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["t3", "t3a", "m5", "m5a", "m6i", "m6a", "m7i", "m7a"]
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values: ["2", "4"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: al2023-x86-64
+  limits:
+    cpu: 20
+  disruption:
+    # 統合のために考慮すべきノードの種類
+    # WhenEmptyOrUnderutilized: すべてのノードを統合の対象とし、ノードが十分に活用されておらず、コスト削減のために変更できると判断した場合にノードを削除・置換しようとする
+    # WhenEmpty: ワークロードポッドを含まないノードのみを統合の対象とする
+    consolidationPolicy: WhenEmptyOrUnderutilized
+
+    # Podがノードに追加または削除された後、Karpenterがノードを統合するまでの待機時間。
+    consolidateAfter: 1m

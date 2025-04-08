@@ -1,0 +1,44 @@
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: bottlerocket-aarch64-nvidia
+spec:
+  amiFamily: Bottlerocket
+  role: "${karpenter_node_role_name}" # replace with your cluster name
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${cluster_name}" # replace with your cluster name
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${cluster_name}" # replace with your cluster name
+  amiSelectorTerms:
+    #- id: "AMI_ID"
+    # bottlerocketのami: https://github.com/bottlerocket-os/bottlerocket#variants
+    - name: "bottlerocket-aws-k8s-${cluster_version}-nvidia-aarch64-*"
+
+  # https://karpenter.sh/v0.37/concepts/nodeclasses/#bottlerocket-1
+  blockDeviceMappings:
+    # Root device
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 4Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+    # Data device: Container resources such as images and logs
+    - deviceName: /dev/xvdb
+      ebs:
+        volumeSize: 64Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+
+  # UserDataのリファレンス: https://bottlerocket.dev/en/os/1.20.x/api/settings-index/
+  # UserDataの設定例: https://karpenter.sh/v0.37/concepts/nodeclasses/#bottlerocket
+  userData: |
+    [settings]
+    [settings.kubernetes]
+    api-server = '${cluster_endpoint}'
+    cluster-certificate = '${cluster_certificate_authority_data}'
+    cluster-name = '${cluster_name}'

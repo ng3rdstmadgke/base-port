@@ -1,0 +1,56 @@
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: al2023-x86-64
+spec:
+  amiFamily: AL2023
+  role: "${karpenter_node_role_name}" # replace with your cluster name
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${cluster_name}" # replace with your cluster name
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${cluster_name}" # replace with your cluster name
+  amiSelectorTerms:
+    #- id: "AMI_ID"
+    # amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
+    - name: "amazon-eks-node-al2023-x86_64-standard-${cluster_version}-*" # <- 新しい AL2 EKS Optimized AMI リリース時に自動的にアップデートされる。安全ではないので本番環境では注意.
+
+  # https://karpenter.sh/v0.37/concepts/nodeclasses/#al2023-1
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 64Gi
+        volumeType: gp3
+        iops: 3000
+        encrypted: true
+        deleteOnTermination: true
+        throughput: 125
+
+  # https://karpenter.sh/v0.37/concepts/nodeclasses/#al2023-3
+  # NodeConfigのリファレンス: https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/api/
+  # NodeConfigの設定例: https://awslabs.github.io/amazon-eks-ami/nodeadm/doc/examples/
+  userData: |
+    MIME-Version: 1.0
+    Content-Type: multipart/mixed; boundary="BOUNDARY"
+  
+    --BOUNDARY
+    Content-Type: application/node.eks.aws
+  
+    ---
+    apiVersion: node.eks.aws/v1alpha1
+    kind: NodeConfig
+    spec:
+      cluster:
+        name: ${cluster_name}
+        apiServerEndpoint: ${cluster_endpoint}
+        certificateAuthority: ${cluster_certificate_authority_data}
+        cidr: ${cluster_service_cidr}
+  
+    --BOUNDARY
+    Content-Type: text/x-shellscript; charset="us-ascii"
+  
+    #!/bin/bash
+    echo "Hello, AL2023!"
+    --BOUNDARY--

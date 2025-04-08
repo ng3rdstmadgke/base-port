@@ -1,34 +1,22 @@
-# セットアップ
+# ■ 動作確認
+
+NodeClassを作成
 
 ```bash
-KARPENTER_VERSION=1.1.0
-KARPENTER_NAMESPACE="kube-system"
-
-helm upgrade --install karpenter-crd oci://public.ecr.aws/karpenter/karpenter-crd \
-  --version $KARPENTER_VERSION \
-  --namespace "$KARPENTER_NAMESPACE" \
-  --create-namespace \
-  --wait
-
-helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
-  --version "$KARPENTER_VERSION" \
-  --namespace "$KARPENTER_NAMESPACE" \
-  --create-namespace \
-  -f $PROJECT_DIR/plugin/karpenter/values_$KARPENTER_VERSION.yaml \
-  --wait
-
-cd ${PROJECT_DIR}/plugin/karpenter
-# マニフェストファイルを作成
-./setup.sh
-
-# NodeClass, NodePoolを作成
-./apply.sh
-
-# NodeClass, NodePoolの削除
-./delete.sh
+for manifest in $(ls $PROJECT_DIR/plugin/karpenter/$STAGE/nodeclass); do
+  kubectl apply -f $PROJECT_DIR/plugin/karpenter/$STAGE/nodeclass/$manifest
+done
 ```
 
-# 動作確認
+NodePoolを作成
+
+```bash
+for manifest in $(ls $PROJECT_DIR/plugin/karpenter/$STAGE/nodepool); do
+  kubectl apply -f $PROJECT_DIR/plugin/karpenter/$STAGE/nodepool/$manifest
+done
+```
+
+サンプルリソースの構築
 
 ```bash
 # al2023-x86-64
@@ -48,8 +36,44 @@ kubectl apply -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64-nvidia
 kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64-nvidia.yaml
 ```
 
-# アップデート (v1.1.0 -> v1.3.3)
-## 差分確認
+
+# ■ インストール
+
+```bash
+KARPENTER_VERSION=1.1.0
+KARPENTER_NAMESPACE="kube-system"
+STAGE=prd
+
+helm upgrade --install karpenter-crd oci://public.ecr.aws/karpenter/karpenter-crd \
+  --version $KARPENTER_VERSION \
+  --namespace "$KARPENTER_NAMESPACE" \
+  --create-namespace \
+  --wait
+
+helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
+  --version "$KARPENTER_VERSION" \
+  --namespace "$KARPENTER_NAMESPACE" \
+  --create-namespace \
+  -f $PROJECT_DIR/plugin/karpenter/prd/conf/values_$KARPENTER_VERSION.yaml \
+  --wait
+
+cd ${PROJECT_DIR}/plugin/karpenter
+
+# NodeClassを作成
+for manifest in $(ls $PROJECT_DIR/plugin/karpenter/$STAGE/nodeclass); do
+  kubectl apply -f $PROJECT_DIR/plugin/karpenter/$STAGE/nodeclass/$manifest
+done
+
+# NodePoolを作成
+for manifest in $(ls $PROJECT_DIR/plugin/karpenter/$STAGE/nodepool); do
+  kubectl apply -f $PROJECT_DIR/plugin/karpenter/$STAGE/nodepool/$manifest
+done
+```
+
+# ■ アップデート履歴
+## (v1.1.0 -> v1.3.3)
+
+差分確認
 
 ```bash
 KARPENTER_VERSION=1.3.3
@@ -61,11 +85,11 @@ helm diff upgrade karpenter-crd oci://public.ecr.aws/karpenter/karpenter-crd \
 
 helm diff upgrade karpenter oci://public.ecr.aws/karpenter/karpenter \
   --namespace $KARPENTER_NAMESPACE \
-  --values $PROJECT_DIR/plugin/karpenter/values_$KARPENTER_VERSION.yaml \
+  --values $PROJECT_DIR/plugin/karpenter/prd/conf/values_$KARPENTER_VERSION.yaml \
   --version $KARPENTER_VERSION
 ```
 
-## アップデート
+アップデート
 
 ```bash
 # karpenter-crd
@@ -80,7 +104,7 @@ helm upgrade --install karpenter oci://public.ecr.aws/karpenter/karpenter \
   --version "$KARPENTER_VERSION" \
   --namespace "$KARPENTER_NAMESPACE" \
   --create-namespace \
-  -f $PROJECT_DIR/plugin/karpenter/values_$KARPENTER_VERSION.yaml \
+  -f $PROJECT_DIR/plugin/karpenter/prd/conf/values_$KARPENTER_VERSION.yaml \
   --wait
 
 # バージョンアップの確認
@@ -89,9 +113,7 @@ helm list -A | grep karpenter
 # karpenter-crd  kube-system  5  2024-12-09 18:01:49.402501464 +0900 JST deployed  karpenter-crd-1.0.8  1.0.8
 ```
 
-## 動作確認
-
-
+動作確認
 
 ```bash
 # bottlerocket-x86-64

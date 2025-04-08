@@ -262,7 +262,9 @@ resource "aws_cloudwatch_event_target" "instance_state_change_rule" {
  * Karpenterのvalues.yamlを作成します。
  */
 resource "local_file" "karpenter_values_1_1_0" {
-  filename = "${var.project_dir}/plugin/karpenter/values_1.1.0.yaml"
+  filename = "${var.project_dir}/plugin/karpenter/${var.stage}/conf/values_1.1.0.yaml"
+  directory_permission = "0755"
+  file_permission = "0644"
   content = templatefile(
     "${path.module}/conf/karpenter_values_1.1.0.yaml",
     {
@@ -273,7 +275,9 @@ resource "local_file" "karpenter_values_1_1_0" {
   )
 }
 resource "local_file" "karpenter_values_1_3_3" {
-  filename = "${var.project_dir}/plugin/karpenter/values_1.3.3.yaml"
+  filename = "${var.project_dir}/plugin/karpenter/${var.stage}/conf/values_1.3.3.yaml"
+  directory_permission = "0755"
+  file_permission = "0644"
   content = templatefile(
     "${path.module}/conf/karpenter_values_1.3.3.yaml",
     {
@@ -308,4 +312,54 @@ resource "aws_security_group" "additional_node_sg" {
     "Name" = "${var.app_name}-${var.stage}-karpenter-AdditionalNodeSecurityGroup"
     "karpenter.sh/discovery" = local.cluster_name
   }
+}
+
+/**
+ * EC2NodeClass のマニフェスト
+ */
+resource "local_file" "ec2_node_class" {
+  for_each = toset([
+    "nodeclass-al2023-x86-64.yaml",
+    "nodeclass-al2-x86-64-nvidia.yaml",
+    "nodeclass-bottlerocket-aarch64-nvidia.yaml",
+    "nodeclass-bottlerocket-x86-64-nvidia.yaml",
+    "nodeclass-bottlerocket-x86-64.yaml",
+  ])
+  filename = "${var.project_dir}/plugin/karpenter/${var.stage}/nodeclass/${each.key}"
+  directory_permission = "0755"
+  file_permission = "0644"
+  content = templatefile(
+    "${path.module}/manifest/${each.key}",
+    {
+      karpenter_node_role_name = aws_iam_role.karpenter_node_role.name
+      cluster_name = local.cluster_name
+      cluster_version = var.eks_cluster_version
+      cluster_endpoint = var.eks_cluster_endpoint
+      cluster_certificate_authority_data = var.eks_cluster_certificate_authority_data
+      cluster_service_cidr = var.eks_cluster_service_cidr
+    }
+  )
+}
+
+
+/**
+ * NodePool のマニフェスト
+ */
+resource "local_file" "node_pool" {
+  for_each = toset([
+    "nodepool-al2023-x86-64-standard.yaml",
+    "nodepool-bottlerocket-aarch64-nvidia-standard.yaml",
+    "nodepool-bottlerocket-x86-64-nvidia-standard.yaml",
+    "nodepool-al2-x86-64-nvidia.yaml",
+    "nodepool-bottlerocket-x86-64-nvidia-g6.yaml",
+    "nodepool-bottlerocket-x86-64-standard.yaml",
+  ])
+  filename = "${var.project_dir}/plugin/karpenter/${var.stage}/nodepool/${each.key}"
+  directory_permission = "0755"
+  file_permission = "0644"
+  content = templatefile(
+    "${path.module}/manifest/${each.key}",
+    {
+    }
+  )
 }

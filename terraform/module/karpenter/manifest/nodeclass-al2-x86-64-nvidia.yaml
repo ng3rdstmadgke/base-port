@@ -1,0 +1,46 @@
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: al2-x86-64-nvidia
+spec:
+  # GPUはAL2とBottlerocketでのみサポートされる
+  amiFamily: AL2
+  role: "${karpenter_node_role_name}" # replace with your cluster name
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${cluster_name}" # replace with your cluster name
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "${cluster_name}" # replace with your cluster name
+  amiSelectorTerms:
+    #- id: "AMI_ID"
+    # amazon-eks-ami リリース: https://github.com/awslabs/amazon-eks-ami/releases
+    - name: "amazon-eks-gpu-node-${cluster_version}-*" # <- 新しい AL2 EKS Optimized AMI リリース時に自動的にアップデートされる。安全ではないので本番環境では注意.
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 64Gi
+        volumeType: gp3
+        iops: 3000
+        encrypted: false
+        deleteOnTermination: true
+        throughput: 125
+  # EKS起動テンプレート: https://docs.aws.amazon.com/ja_jp/eks/latest/userguide/launch-templates.html#launch-template-custom-ami
+  #                     https://karpenter.sh/v0.37/concepts/nodeclasses/#al2ubuntu
+  # bootstrap.sh のソースコード: https://github.com/awslabs/amazon-eks-ami/blob/main/templates/al2/runtime/bootstrap.sh
+  userData: |
+    MIME-Version: 1.0
+    Content-Type: multipart/mixed; boundary="==BOUNDARY=="
+
+    --==BOUNDARY==
+    Content-Type:text/x-shellscript; charset="us-ascii"
+
+    exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+    #!/bin/bash -xe
+    /etc/eks/bootstrap.sh '${cluster_name}' \
+      --apiserver-endpoint '${cluster_endpoint}' \
+      --b64-cluster-ca '${cluster_certificate_authority_data}'
+
+    echo "KARPENTER: Starting user data script"
+    --==BOUNDARY==--

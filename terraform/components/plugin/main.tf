@@ -85,6 +85,10 @@ module karpenter {
   stage = var.stage
   project_dir = local.project_dir
   eks_oidc_issure_url = local.cluster_identity_oidc_issure
+  eks_cluster_certificate_authority_data = local.cluster_certificate_authority_data
+  eks_cluster_endpoint = local.cluster_endpoint
+  eks_cluster_service_cidr = local.cluster_service_cidr
+  eks_cluster_version = local.cluster_version
 }
 
 module metrics_server {

@@ -1,0 +1,49 @@
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: al2-x86-64-nvidia-standard
+spec:
+  template:
+    metadata:
+      labels:
+        karpenter.baseport.net/nodeclass: al2-x86-64-nvidia
+    spec:
+      terminationGracePeriod: 24h  # ノードが強制削除される前にdrainできる最大時間
+      expireAfter: 720h  # クラスタにノードが存在できる最長時間 (ノードの長期間の稼動による問題(メモリリークなど)のリスクを低減する)
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot"]  # spot or on-demand
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["g4dn"]
+        - key: "karpenter.k8s.aws/instance-cpu"
+          operator: In
+          values: ["4"]
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: al2-x86-64-nvidia
+      # nvidia-device-pluginデーモンセットを起動しなければならないため "nvidia.com/gpu" 以外のtaintの付与には注意
+      # nvidia-device-pluginデーモンセットのtoleration: https://github.com/NVIDIA/k8s-device-plugin/blob/v0.16.2/deployments/helm/nvidia-device-plugin/values.yaml#L85
+      taints:
+        - key: nvidia.com/gpu
+          value: "true"
+          effect: "NoSchedule"
+  limits:
+    cpu: 20
+  disruption:
+    # 統合のために考慮すべきノードの種類
+    # WhenEmptyOrUnderutilized: すべてのノードを統合の対象とし、ノードが十分に活用されておらず、コスト削減のために変更できると判断した場合にノードを削除・置換しようとする
+    # WhenEmpty: ワークロードポッドを含まないノードのみを統合の対象とする
+    consolidationPolicy: WhenEmptyOrUnderutilized
+
+    # Podがノードに追加または削除された後、Karpenterがノードを統合するまでの待機時間。
+    consolidateAfter: 1m

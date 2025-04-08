@@ -32,9 +32,11 @@ locals {
   project_dir = data.terraform_remote_state.base.outputs.project_dir
   vpc_id = data.terraform_remote_state.network.outputs.vpc_id
   cluster_name = data.terraform_remote_state.cluster.outputs.eks_cluster_name
+  cluster_version = data.terraform_remote_state.cluster.outputs.eks_cluster_version
   cluster_endpoint = data.terraform_remote_state.cluster.outputs.eks_cluster_endpoint
   cluster_certificate_authority_data = data.terraform_remote_state.cluster.outputs.eks_cluster_certificate_authority_data
   cluster_identity_oidc_issure = data.terraform_remote_state.cluster.outputs.eks_cluster_identity_oidc_issure
+  cluster_service_cidr = data.terraform_remote_state.cluster.outputs.eks_cluster_service_cidr
 }
 
 data terraform_remote_state "base" {
