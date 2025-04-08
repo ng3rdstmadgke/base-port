@@ -39,6 +39,6 @@ module default_node_group {
   key_pair_name = var.key_pair_name
   node_role_arn = local.node_role_arn
   // スポット料金: https://aws.amazon.com/jp/ec2/spot/pricing/
-  instance_types = ["t3a.xlarge"]
-  desired_size = 1
+  instance_types = ["t3a.large"]
+  desired_size = 2
 }
