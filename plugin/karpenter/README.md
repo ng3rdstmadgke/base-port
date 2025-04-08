@@ -53,6 +53,8 @@ kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-aarch64-nvid
 
 # ■ インストール
 
+※ terraform の plugin コンポーネントがデプロイされている事が前提
+
 ```bash
 KARPENTER_VERSION=1.1.0
 KARPENTER_NAMESPACE="kube-system"
