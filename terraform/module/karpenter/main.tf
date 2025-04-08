@@ -87,7 +87,7 @@ resource "aws_iam_role" "karpenter_controller_role" {
 resource "aws_iam_policy" "karpenter_controller_policy" {
   name = "${var.app_name}-${var.stage}-KarpenterControllerPolicy"
   policy = templatefile(
-    "${path.module}/karpenter_controller_policy_1.3.3.json",
+    "${path.module}/conf/karpenter_controller_policy_1.3.3.json",
     {
       cluster_name = local.cluster_name
       account_id   = local.account_id
@@ -264,7 +264,7 @@ resource "aws_cloudwatch_event_target" "instance_state_change_rule" {
 resource "local_file" "karpenter_values_1_1_0" {
   filename = "${var.project_dir}/plugin/karpenter/values_1.1.0.yaml"
   content = templatefile(
-    "${path.module}/karpenter_values_1.1.0.yaml",
+    "${path.module}/conf/karpenter_values_1.1.0.yaml",
     {
       cluster_name = local.cluster_name
       interruption_queue_name = "${var.app_name}-${var.stage}-KarpenterInterruptionQueue"
@@ -275,7 +275,7 @@ resource "local_file" "karpenter_values_1_1_0" {
 resource "local_file" "karpenter_values_1_3_3" {
   filename = "${var.project_dir}/plugin/karpenter/values_1.3.3.yaml"
   content = templatefile(
-    "${path.module}/karpenter_values_1.3.3.yaml",
+    "${path.module}/conf/karpenter_values_1.3.3.yaml",
     {
       cluster_name = local.cluster_name
       interruption_queue_name = "${var.app_name}-${var.stage}-KarpenterInterruptionQueue"
