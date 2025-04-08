@@ -19,23 +19,37 @@ done
 サンプルリソースの構築
 
 ```bash
-# al2023-x86-64
-kubectl apply -f $PROJECT_DIR/plugin/karpenter/sample/al2023-x86-64.yaml
-kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/al2023-x86-64.yaml
-
 # al2-x86-64-nvidia
 kubectl apply -f $PROJECT_DIR/plugin/karpenter/sample/al2-x86-64-nvidia.yaml
-kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/al2-x86-64-nvidia.yaml
-
+# al2023-x86-64
+kubectl apply -f $PROJECT_DIR/plugin/karpenter/sample/al2023-x86-64.yaml
 # bottlerocket-x86-64
 kubectl apply -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64.yaml
-kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64.yaml
-
 # bottlerocket-x86-64-nvidia
 kubectl apply -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64-nvidia.yaml
-kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64-nvidia.yaml
+# bottlerocket-x86-64-nvidia-g6
+kubectl apply -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64-nvidia-g6.yaml
+# bottlerocket-aarch64-nvidia
+kubectl apply -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-aarch64-nvidia.yaml
 ```
 
+サンプルリソースの削除
+
+
+```bash
+# al2-x86-64-nvidia
+kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/al2-x86-64-nvidia.yaml
+# al2023-x86-64
+kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/al2023-x86-64.yaml
+# bottlerocket-x86-64
+kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64.yaml
+# bottlerocket-x86-64-nvidia
+kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64-nvidia.yaml
+# bottlerocket-x86-64-nvidia-g6
+kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-x86-64-nvidia-g6.yaml
+# bottlerocket-aarch64-nvidia
+kubectl delete -f $PROJECT_DIR/plugin/karpenter/sample/bottlerocket-aarch64-nvidia.yaml
+```
 
 # ■ インストール
 
